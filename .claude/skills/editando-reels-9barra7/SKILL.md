@@ -1,0 +1,113 @@
+---
+name: editando-reels-9barra7
+description: Use when there are raw recordings in a Produção/Lote folder of the 9barra7 project to be sorted, cut or edited into reels, or when someone asks to edit a 9barra7 reel ("edita o reel 07"), decupagem, montagem, Palmier Pro, telas animadas or sound design on 9barra7 content.
+---
+
+# Editando reels do 9barra7
+
+Leva os brutos de um lote até o reel pronto. A Marilia grava **um take longo por reel**, lendo teleprompter: fala a data do reel e bate uma palma no começo, e quando erra, pausa e repete a frase inteira. Nada é renomeado.
+
+O William não edita: eu monto tudo e ele revisa por escrito. O editor é o **Palmier Pro** (MCP `palmier-pro`), onde ele mexe à mão em detalhe pequeno. Remotion e HyperFrames só fazem as telas animadas.
+
+**Duas paradas pra aprovação, e só duas:** o roteiro de edição (antes de montar) e o reel montado no Palmier (antes de exportar). O resto roda direto.
+
+Todas as regras visuais e sonoras estão em `padrao-edicao.md`. Nada fora dele. Modelo: reel 06.
+
+## Estrutura
+
+```
+Produção/Lote N - dd.mm a dd.mm/
+  _brutos/                  tudo cru: câmera, tela, lapela
+  NN - dd.mm Família/
+    1-roteiro/  .docx (vale este) + roteiro.json (gerado dele)
+    2-arquivos/ renders, prints, plantas, gravações de tela
+    3-takes/    preenchido pelo organizar.py
+    4-edicao/   edicao.json, montagem.json, audio/, imagem/, telas/
+    5-final/    mp4 entregue
+```
+
+Scripts em `.claude/skills/editando-reels-9barra7/scripts/`. Todos recebem `"<pasta do reel>"` (o organizar recebe a do lote).
+
+## Etapas
+
+1. **Organizar o lote**: `organizar.py "<pasta do lote>"`. Transcreve cada bruto, acha o reel pela claquete (ou pela fala), separa câmera de tela e liga em `3-takes/`. Mapa em `_brutos/_mapa.json`
+2. **Decupar**: `decupar.py`. Acha cada frase do roteiro no take (última versão). Grava `4-edicao/cortes.json`
+3. **Tratar o áudio do take**: cadeia em "Áudio" abaixo. Gera `4-edicao/audio/D-eq9.wav`
+4. **Medir** (podem rodar juntos):
+   - `ilhas.py`: transcrição ilha por ilha → `ilhas.json`
+   - `rosto.py`: rosto no 4K → `rosto.json`
+   - `imagem.py` (depois do rosto; ~4 min): recorte P1 com look C → `imagem/camera-edicao.mp4`
+5. **Roteiro de edição**: escrever `edicao.json` e `roteiro-de-edicao.md` (ver formato abaixo). As bordas do corte se conferem pela energia acima de 3 kHz (s, ç, f parecem silêncio no volume).
+   **PARADA 1: mandar o roteiro de edição pro William e esperar o ok**
+6. **Montar**: `montar.py` → `audio/montagem.wav` e `montagem.json` (trechos, legendas, gancho, destaque, virada, telas)
+7. **Limpar a voz e fazer a cama**: `audio/falhas_mic.py` → `montagem-limpa.wav`; depois `audio/cama.py` → `cama.wav`
+8. **Telas** (em `4-edicao/telas/`, ProRes 4444 com transparência, material só na metade de cima, 1080×960):
+   - tela que se repete (comparação de renders, materiais): template do Remotion em `Produção/_montagem/src/Telas.tsx`, uma `Composition` por tela no `Root.tsx`.
+     `npx remotion render <Id> <saída>.mov --codec prores --prores-profile 4444 --pixel-format yuva444p10le --image-format png`
+   - tela única (números, gravação de software): HyperFrames, um projeto por tela em `Produção/_telas/<reel>-<cena>/` (modelo: `reel06-cena9`, `reel06-cena6-7`). `npx hyperframes render --format mov`
+   - anotar cada tela em `4-edicao/telas.md` (o que mostra, de onde vem cada imagem)
+9. **Projeto no Palmier**: `palmier.py` grava `~/Documents/Palmier Pro/<reel>.palmier` e `4-edicao/palmier-textos.json`. Depois, pelo MCP:
+   - `manage_project` open no .palmier (o Palmier precisa estar aberto)
+   - `add_texts` com a lista `destaque` do json na faixa 0 e a lista `texto` na faixa 1 (texto em outra faixa apaga o que estiver nela)
+   - conferir com `capture_frame` o gancho, uma legenda sobre câmera, uma sobre tela, o destaque e o fechamento (o `inspect_timeline` ignora o zoom)
+   **PARADA 2: avisar o William que o reel está no Palmier e esperar o ok ou os ajustes**
+10. **Exportar e conferir**: `export_project` (mp4) só depois do ok. Depois `conferir.py "<pasta>" "<mp4 exportado>"`: acerta -14 LUFS só com ganho (o Palmier exporta ~3 dB alto), confere duração, quadro preto e estalos, e grava `5-final/<reel>.mp4`
+11. **Revisor cego**: um agente que não viu nada da edição assiste ao `5-final` (quadros a cada 0,5 s + áudio) com o `padrao-edicao.md` e aponta o que quebra regra. Resultado em `4-edicao/revisor-cego.json`. Corrigir o que for erro de regra; o que for gosto vira pergunta pro William
+12. **Entrega**: caminho do mp4 e, se houver, o que o revisor levantou que pede decisão. Pacote Premiere só se a Marilia pedir (`export_project` modo xml)
+
+## edicao.json
+
+Formato do reel 06 (`Produção/Lote 1.../06 .../4-edicao/edicao.json`):
+- `pausas`: {cont 0.12, frase 0.2, cena 0.3}
+- `trechos`: n, ilha, fonte_ini, fonte_fim (s no take), cena, pausa_antes, plano (P1, P2, P3, ÊNFASE, com "empurra" se for o caso), texto
+- `fora`: ilhas descartadas e o motivo (recomeço, hesitação, versão antiga)
+- `gancho`: texto enxuto da primeira frase, `linhas` (2, CAIXA ALTA), `dur_s` 3
+- `virada`: nº do trecho onde o reel sai do problema e entra na solução. É ele que dá a dinâmica da cama, não o roteiro
+- `destaque`: texto (2 linhas com `\n`), trecho, `comeca_em` (palavra da fala em que entra). No máximo um
+- `telas`: arquivo (em `4-edicao/telas/`) e trecho em que entra
+
+O `roteiro-de-edicao.md` é a versão pra ler: trecho a trecho com plano, cobertura, gancho, virada, destaque e o que ficou de fora.
+
+## Antes de seguir, conferir
+
+| Sinal | O que fazer |
+|---|---|
+| `NÃO IDENTIFICADO` no organizar | abrir o arquivo, ouvir o começo, e ligar manualmente em `3-takes/` |
+| `SEM TAKE DE CÂMERA` | avisar quem gravou, não inventar corte |
+| `FALTOU cena N` no decupar | a frase não foi falada ou mudou no refino. Conferir contra o .docx antes de seguir |
+| ela regravou só o fim de uma frase | partir o trecho em dois no `edicao.json` (começo da 1ª versão + fim da regravada) |
+| arquivo `audio` no mapa (lapela gravada à parte) | a sincronização pela palma ainda não existe. Avisar antes de montar |
+| `.docx` mais novo que o `roteiro.json` | o roteiro foi refinado. Atualizar o json a partir do docx antes de decupar |
+| legenda caindo no rosto na tela dividida | subir a câmera (centerY), nunca a legenda |
+| `AVISOS` no conferir | resolver antes de entregar |
+
+## Áudio (em `scripts/audio/`)
+
+Sobre o áudio do take em wav float mono 48 kHz, nesta ordem:
+1. `buracos.py`: falhas de ~1 ms do microfone sem fio
+2. `estalos_hf.py`: estalo curto dentro de vogal forte (a voz dela quase não tem energia acima de 9 kHz, todo estalo espirra ali)
+3. `declip.py`: reconstrução do pico só abaixo de 5 kHz
+4. `aspereza.py`: baixa 5-12 kHz só onde o bruto clipou
+5. `cadeia_reel.py --bruto <wav do bruto>`: EQ de timbre, compressor leve, -14 LUFS e limitador com antecipação → `D-eq9.wav`. Nada de loudnorm (estalava)
+
+Depois do `montar.py`: `falhas_mic.py` (voz montada) e `cama.py` (cama "Technology", única pra todos os reels). `ab.py` gera vídeo A/B quando uma escolha precisa ser de ouvido.
+Conferir com `estalos_hf.detectar(x, sr, 6.0)`: no reel 06, bruto 291, tratado ~47, voz final 7.
+
+## Palmier: o que já se sabe
+
+- o projeto precisa estar aberto na sessão (`manage_project` open) antes de qualquer edição
+- texto: tamanho em pontos do canvas (px = pt × 1,778); negrito precisa de `bold: true`
+- não lê qtrle: tela com transparência sempre em ProRes 4444
+- imagem PNG sai mais quente que vídeo: quadro congelado é sempre vídeo parado (o `palmier.py` já faz)
+- a soma de áudio exporta ~3 dB alta (o `conferir.py` corrige)
+- não gastar crédito de geração do Palmier (música, efeito, imagem) quando há biblioteca grátis
+
+## Referências
+
+Todas as referências do William (reels, legenda, gancho, skills, ferramentas), com o que aproveitamos de cada uma: `Produção/referencias/LEIA-ME.md`. Consultar antes de propor estilo novo.
+
+## Regras
+
+- O `.docx` do reel é a versão que vale. O `roteiro.json` é derivado dele
+- Nunca apagar nem renomear nada em `_brutos/`. O que sai de uso vai pra `_aposentados/` ou `_descartados/`
+- Mudança de padrão só com ok do William, e vale pra todos os reels seguintes

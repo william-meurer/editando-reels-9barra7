@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- Reel 06, cena 9 (telas.md), tela dividida: o material ocupa a metade de cima (1080x960) e a Marilia aparece embaixo.
+     Render 1 · "20 minutos" (2,03 s na cena) "20 min" no centro da área visível · "A segunda" (3,55) o render 2 entra
+     empurrando · "5" (4,13) "5 min" · segura 0,5 s a mais e sai em corte seco. O que importa fica abaixo de y 208 (Instagram). -->
+<html lang="pt-BR" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: transparent; }
+      #root { position: relative; width: 1080px; height: 1920px; }
+      #tela { position: absolute; left: 0; top: 0; width: 1080px; height: 960px; overflow: hidden; }
+      .painel { position: absolute; left: 0; top: 0; width: 1080px; height: 960px; overflow: hidden; }
+      .painel .cap { position: absolute; inset: 0; }
+      .painel img { width: 1080px; height: 960px; object-fit: cover; display: block; }
+      #p2 { transform: translateX(1080px); }
+      @font-face { font-family: "DM Sans"; src: url("assets/DMSans-Bold.ttf"); font-weight: 700; }
+      /* mesmo padrão do gancho e da palavra-chave: DM Sans Bold ~128 px, branca, sem sombra, espaçamento bem justo */
+      .num { position: absolute; left: 0; top: 208px; width: 1080px; height: 752px; display: flex; align-items: center; justify-content: center;
+             font-family: "DM Sans"; font-weight: 700; font-size: 128px; letter-spacing: -0.07em; color: #fff; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="5.0333" data-width="1080" data-height="1920">
+      <div id="tela" class="clip" data-start="0" data-duration="5.0333">
+        <div class="painel" id="p1"><div class="cap"><img src="assets/render-1.jpg" /></div><div class="num" id="n1">20 min</div></div>
+        <div class="painel" id="p2"><div class="cap"><img src="assets/render-2.jpg" />
+          <!-- mesmo círculo da cena 3, agora no ripado com o tom certo (render-2 1400x782 coberto em 1080x960) -->
+          <svg width="1080" height="960" style="position:absolute;left:0;top:0;overflow:visible"><ellipse id="circ" cx="316" cy="394" rx="247" ry="106" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-dasharray="1150" stroke-dashoffset="1150" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))"/></svg>
+        </div><div class="num" id="n2">5 min</div></div>
+      </div>
+      <audio id="clique-20" src="assets/clique.wav" data-volume="0.5" data-start="2.03" data-duration="0.3"></audio>
+      <audio id="clique-5" src="assets/clique.wav" data-volume="0.5" data-start="4.13" data-duration="0.3"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      // entra já em movimento: aproximação lenta nas duas imagens
+      tl.fromTo(".painel .cap", { scale: 1 }, { scale: 1.04, duration: 5.0333, ease: "none", transformOrigin: "50% 50%" }, 0);
+      // "20 min" entra com pop, igual ao gancho e à palavra-chave
+      tl.fromTo("#n1", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.2, ease: "back.out(2)" }, 2.03);
+      // "A segunda": o render 2 entra empurrando o 1
+      tl.to("#p1", { x: -1080, duration: 0.2667, ease: "power2.inOut" }, 3.55);
+      tl.fromTo("#p2", { x: 1080 }, { x: 0, duration: 0.2667, ease: "power2.inOut" }, 3.55);
+      // o mesmo círculo da cena 3 no ripado, agora com o tom certo
+      tl.to("#circ", { strokeDashoffset: 0, duration: 0.27, ease: "power2.out" }, 3.85);
+      tl.fromTo("#n2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.2, ease: "back.out(2)" }, 4.13);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

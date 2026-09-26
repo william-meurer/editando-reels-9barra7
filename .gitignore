@@ -1,3 +1,24 @@
+# Repositório só da skill de reels: tudo fora, e libera o que ela usa
+/*
+!/.gitignore
+!/LEIA-ME-SKILL.md
+!/.claude/
+/.claude/*
+!/.claude/skills/
+/.claude/skills/*
+!/.claude/skills/editando-reels-9barra7/
+!/Produção/
+/Produção/*
+!/Produção/kit/
+!/Produção/_montagem/
+!/Produção/_telas/
+node_modules/
+/Produção/_montagem/public/arquivos/
+/Produção/_montagem/public/reels/
+_descartados/
+_aposentados/
 __pycache__/
 *.pyc
 .DS_Store
+.git-antigo/
+.gitignore-antigo

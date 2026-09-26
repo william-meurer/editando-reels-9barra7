@@ -1,0 +1,103 @@
+<!doctype html>
+<!-- Reel 06, cenas 6 e 7 (telas.md), seguidas: começa no quadro 979 (32,63 s) e vai até o 1472 (49,07 s).
+     Gravação real do promptador "Renderizar imagens em série" (2-arquivos/provisorio/promptador), em recortes que seguem a fala:
+     0 promptador · 3,47 "primeira imagem já pronta" entra o anexo 1 · 6,47 "segundo print" entra o anexo 2 ·
+     7,90 cena 7: a mensagem com as duas imagens · 8,77 "cruza as informações" contorno nas duas ·
+     11,27 "prompt" o prompt final · 12,67 "mantendo as características" marca-texto em material e luz ·
+     15,77 "primeira" o render 1 volta com seta · sai em corte seco. Tela dividida: metade de cima (1080x960), o que importa abaixo de y 208. -->
+<html lang="pt-BR" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: transparent; }
+      #root { position: relative; width: 1080px; height: 1920px; }
+      #tela { position: absolute; left: 0; top: 0; width: 1080px; height: 960px; overflow: hidden; }
+      #quadro { position: absolute; left: 0; top: 0; width: 1080px; height: 960px; background: #f5f5f2; overflow: hidden; }
+      .etapa { position: absolute; left: 0; top: 0; width: 1080px; height: 960px; opacity: 0; }
+      .etapa img { position: absolute; left: 0; width: 1080px; display: block; }
+      #a img { top: 204px; }
+      #b img, #c img { top: 335px; }
+      #d img { top: 254px; }
+      #e .caixa { position: absolute; left: 0; top: 435px; width: 1080px; height: 298px; transform-origin: 540px 160px; }
+      #e .caixa img { top: 0; }
+      .marca { position: absolute; background: #B3FF9F; mix-blend-mode: multiply; transform-origin: 0 50%; transform: scaleX(0); border-radius: 4px; }
+      .contorno { position: absolute; border: 6px solid #fff; border-radius: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.15); opacity: 0; }
+      #render1 { position: absolute; left: 398px; top: 228px; width: 284px; border-radius: 14px; overflow: hidden; opacity: 0;
+                 box-shadow: 0 0 0 5px #fff, 0 2px 8px rgba(0,0,0,.35); }
+      #render1 img { position: static; width: 100%; display: block; }
+      #seta { position: absolute; left: 0; top: 0; overflow: visible; }
+      .trecho { position: absolute; left: 540px; opacity: 0; }
+      .trecho img { display: block; mix-blend-mode: multiply; position: relative; width: auto; left: auto; top: auto; }
+      .trecho .fundo { position: absolute; left: 4px; right: 0; top: 4px; bottom: 4px; background: #B3FF9F; border-radius: 3px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="16.4333" data-width="1080" data-height="1920">
+      <div id="tela" class="clip" data-start="0" data-duration="16.4333">
+        <div id="quadro">
+          <div class="etapa" id="a"><img src="assets/a_vazio.png" /></div>
+          <div class="etapa" id="b"><img src="assets/b_anexo1.png" /></div>
+          <div class="etapa" id="c"><img src="assets/c_anexo2.png" /></div>
+          <div class="etapa" id="d"><img src="assets/d_bolha.png" />
+            <!-- as duas imagens da mensagem (d_bolha 1130 px -> 1080, escala 0,956) -->
+            <div class="contorno" id="k1" style="left:457px; top:301px; width:292px; height:357px;"></div>
+            <div class="contorno" id="k2" style="left:760px; top:301px; width:292px; height:357px;"></div>
+          </div>
+          <div class="etapa" id="e">
+            <div class="caixa"><img src="assets/e_prompt.png" />
+              <!-- trechos de material e luz (e_prompt 1270 px -> 1080, escala 0,85) -->
+              <div class="marca" id="m1" style="left:164px; top:112px; width:280px; height:32px;"></div>
+              <div class="marca" id="m2" style="left:695px; top:150px; width:236px; height:31px;"></div>
+              <div class="marca" id="m3" style="left:661px; top:227px; width:340px; height:31px;"></div>
+            </div>
+          </div>
+          <!-- os três trechos de material e luz, ampliados pra leitura no celular (recortes do próprio prompt) -->
+          <div class="etapa" id="f">
+            <div id="render1"><img src="assets/render-1.jpg" /></div>
+            <svg id="seta" width="1080" height="960"><path id="seta-p" d="M 540 420 L 540 396" fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-dasharray="30" stroke-dashoffset="30"/>
+              <path id="seta-ponta" d="M 526 408 L 540 394 L 554 408" fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0"/></svg>
+            <div class="trecho" id="t1" style="top:430px"><div class="fundo"></div><img src="assets/t1.png" /></div>
+            <div class="trecho" id="t2" style="top:570px"><div class="fundo"></div><img src="assets/t2.png" /></div>
+            <div class="trecho" id="t3" style="top:710px"><div class="fundo"></div><img src="assets/t3.png" /></div>
+          </div>
+        </div>
+      </div>
+      <audio id="clique-anexo1" src="assets/clique.wav" data-volume="0.5" data-start="3.47" data-duration="0.3"></audio>
+      <audio id="clique-anexo2" src="assets/clique.wav" data-volume="0.5" data-start="6.47" data-duration="0.3"></audio>
+      <audio id="clique-cruza" src="assets/clique.wav" data-volume="0.5" data-start="8.77" data-duration="0.3"></audio>
+      <audio id="clique-marca" src="assets/clique.wav" data-volume="0.5" data-start="12.67" data-duration="0.3"></audio>
+      <audio id="clique-render" src="assets/clique.wav" data-volume="0.5" data-start="15.77" data-duration="0.3"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const corte = (id, t) => tl.set(id, { opacity: 1 }, t);
+      const tira = (id, t) => tl.set(id, { opacity: 0 }, t);
+      // cena 6: promptador, anexo 1, anexo 2 (cortes secos, cada um já em aproximação lenta)
+      corte("#a", 0); tl.fromTo("#a img", { scale: 1 }, { scale: 1.04, duration: 3.47, ease: "none", transformOrigin: "50% 50%" }, 0);
+      tira("#a", 3.47); corte("#b", 3.47); tl.fromTo("#b img", { scale: 1 }, { scale: 1.05, duration: 3.0, ease: "none", transformOrigin: "20% 60%" }, 3.47);
+      tira("#b", 6.47); corte("#c", 6.47); tl.fromTo("#c img", { scale: 1.02 }, { scale: 1.06, duration: 1.43, ease: "none", transformOrigin: "30% 60%" }, 6.47);
+      // cena 7: a mensagem com as duas imagens; "cruza as informações" marca as duas
+      tira("#c", 7.9); corte("#d", 7.9); tl.fromTo("#d img", { scale: 1 }, { scale: 1.04, duration: 3.37, ease: "none", transformOrigin: "70% 40%" }, 7.9);
+      tl.to("#k1", { opacity: 1, duration: 0.12 }, 8.77); tl.to("#k2", { opacity: 1, duration: 0.12 }, 8.92);
+      // "prompt": o prompt final; "mantendo as características": marca-texto nos trechos de material e luz
+      tira("#d", 11.27); corte("#e", 11.27); tl.fromTo("#e .caixa", { scale: 1 }, { scale: 1.03, duration: 5.16, ease: "none" }, 11.27);
+      tl.to("#m1", { scaleX: 1, duration: 0.3, ease: "power2.out" }, 12.67);
+      tl.to("#m2", { scaleX: 1, duration: 0.25, ease: "power2.out" }, 12.97);
+      tl.to("#m3", { scaleX: 1, duration: 0.3, ease: "power2.out" }, 13.22);
+      // "primeira": o render 1 volta, com seta saindo dos trechos marcados
+      // corta pros três trechos ampliados (legíveis no celular), um de cada vez
+      tl.set(".trecho", { xPercent: -50, scale: 2.3, transformOrigin: "50% 0%" }, 0);
+      tira("#e", 13.6); corte("#f", 13.6);
+      ["#t1", "#t2", "#t3"].forEach((id, n) => tl.fromTo(id, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.18, ease: "power2.out" }, 13.6 + n * 0.2));
+      tl.fromTo("#render1", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.2, ease: "back.out(2)" }, 15.77);
+      tl.to("#seta-p", { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 15.77);
+      tl.set("#seta-ponta", { opacity: 1 }, 16.05);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
