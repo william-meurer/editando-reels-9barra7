@@ -36,15 +36,15 @@ const Selo: React.FC<{r: Rotulo; s: number}> = ({r, s}) => {
 };
 
 // contorno desenhado em 8 quadros, depois segura
-const Contorno: React.FC<{m: Marca; w: number; h: number}> = ({m, w, h}) => {
+const Contorno: React.FC<{m: Marca; w: number; h: number; s: number}> = ({m, w, h, s}) => {
 	const k = useCurrentFrame();
 	const p = interpolate(k, [0, 8], [0, 1], {extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
 	const perim = Math.PI * (3 * (m.rx + m.ry) - Math.sqrt((3 * m.rx + m.ry) * (m.rx + 3 * m.ry)));
 	return (
 		<svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{position: 'absolute', left: 0, top: 0, overflow: 'visible'}}>
-			<ellipse cx={m.cx} cy={m.cy} rx={m.rx} ry={m.ry} fill="none" stroke="#fff" strokeWidth={7}
+			<ellipse cx={m.cx} cy={m.cy} rx={m.rx} ry={m.ry} fill="none" stroke="#fff" strokeWidth={8.5 / s}
 				strokeDasharray={perim} strokeDashoffset={perim * (1 - p)} strokeLinecap="round"
-				style={{filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.55))'}} />
+				style={{filter: `drop-shadow(0 ${1.2 / s}px ${2.4 / s}px rgba(0,0,0,.55))`}} />
 		</svg>
 	);
 };
@@ -63,7 +63,7 @@ const Imagem: React.FC<{src: string; tam: [number, number]; empurra: number; i: 
 			)}
 			{marcas.filter((m) => m.img === i).map((m, j) => (
 				<Sequence key={j} from={m.quadro} layout="none">
-					<Contorno m={m} w={w} h={h} />
+					<Contorno m={m} w={w} h={h} s={s * empurra} />
 					<Audio src={staticFile('kit/sfx/clique.wav')} volume={0.5} />
 				</Sequence>
 			))}
@@ -97,31 +97,30 @@ export const TelaComparacao: React.FC<Comparacao> = (c) => {
 };
 
 // reel 06, cena 3 (telas.md): "madeira" 11,9 s · "primeira imagem" 13,5 · "segunda" 15,6 · "percebe" 17,4. Cena começa no quadro 349 (11,63 s).
-// Provisório: render dos fundos e render da frente da mesma casa (prompthub-site); a madeira da segunda é escurecida pra simular o erro.
+// Imagens definitivas (2-arquivos): render 1 = "imagem 1.png"; render 2 com o tom errado = "errado.png". Recortadas pra metade de cima em _recortes/.
 export const cena3Reel06: Comparacao = {
-	imagens: ['arquivos/F5-01/provisorio/render-1.jpg', 'arquivos/F5-01/provisorio/render-2.jpg'],
-	tamanho: [1400, 788],
+	imagens: ['arquivos/F5-01/_recortes/render-1.jpg', 'arquivos/F5-01/_recortes/render-2-errado.jpg'],
+	tamanho: [2160, 1920],
 	entraSegunda: 119,
 	marcas: [
-		{quadro: 8, img: 0, cx: 752, cy: 288, rx: 311, ry: 75},
-		{quadro: 127, img: 1, cx: 518, cy: 321, rx: 201, ry: 86},
+		{quadro: 8, img: 0, cx: 700, cy: 610, rx: 520, ry: 150},
+		{quadro: 127, img: 1, cx: 1080, cy: 640, rx: 560, ry: 170},
 	],
 	duracao: 195,
-	erroSegunda: {cx: 518, cy: 321, rx: 194, ry: 80, filtro: 'hue-rotate(-18deg) saturate(1.7) brightness(0.72)'},
 	// o erro fica explícito: selo roxo (cor do ANTES) logo abaixo do círculo
-	rotulos: [{quadro: 131, img: 1, x: 518, y: 440, texto: 'o tom mudou', cor: '#A4A1F3'}],
+	rotulos: [{quadro: 131, img: 1, x: 1080, y: 880, texto: 'o tom mudou', cor: '#A4A1F3'}],
 };
 
-// reel 06, cobertura do trecho 0:21,8 a 0:28,2 (quadros 655 a 847): "os materiais" (687) madeira e pedra · "a iluminação" (715) luz.
-// Uma imagem só (render dos fundos): a segunda nunca entra.
+// reel 06, cobertura do trecho 0:21,8 a 0:28,2 (quadros 655 a 847): "os materiais" (687) madeira e concreto · "a iluminação" (715) luz.
+// Uma imagem só (render 1): a segunda nunca entra.
 export const materiaisReel06: Comparacao = {
-	imagens: ['arquivos/F5-01/provisorio/render-1.jpg', 'arquivos/F5-01/provisorio/render-1.jpg'],
-	tamanho: [1400, 788],
+	imagens: ['arquivos/F5-01/_recortes/render-1.jpg', 'arquivos/F5-01/_recortes/render-1.jpg'],
+	tamanho: [2160, 1920],
 	entraSegunda: 100000,
 	marcas: [
-		{quadro: 32, img: 0, cx: 752, cy: 288, rx: 311, ry: 75},
-		{quadro: 44, img: 0, cx: 959, cy: 466, rx: 100, ry: 100},
-		{quadro: 68, img: 0, cx: 719, cy: 480, rx: 125, ry: 62},
+		{quadro: 32, img: 0, cx: 700, cy: 610, rx: 520, ry: 150},
+		{quadro: 44, img: 0, cx: 1660, cy: 700, rx: 210, ry: 210},
+		{quadro: 68, img: 0, cx: 520, cy: 1180, rx: 430, ry: 220},
 	],
 	duracao: 192,
 };
