@@ -10,7 +10,7 @@ Faixas, de cima pra baixo (padrao-edicao.md):
 - efeitos: grave no 0:00, whoosh na entrada da primeira tela, subida que resolve no corte da virada, pop no destaque
 - os textos NÃO vão no arquivo (o Palmier calcula a caixa de cada texto): saem prontos em 4-edicao/palmier-textos.json,
   pra aplicar com add_texts depois de abrir o projeto (ver SKILL.md)
-Uso: palmier.py "<pasta do reel>" [--nome "Reel 06 - ..."]   (grava em ~/Documents/Palmier Pro/<nome>.palmier)"""
+Uso: palmier.py "<pasta do reel>" [--nome "Reel 06 - ..."]   (grava o editável em 4-edicao/<nome>.palmier)"""
 import argparse, json, os, subprocess, uuid
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -107,7 +107,7 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument('pasta'); ap.add_argument('--nome')
     a = ap.parse_args(); ed = os.path.join(a.pasta, '4-edicao')
     m = json.load(open(os.path.join(ed, 'montagem.json'), encoding='utf-8'))
-    nome = a.nome or 'Reel ' + os.path.basename(os.path.normpath(a.pasta))
+    nome = a.nome or os.path.basename(os.path.normpath(a.pasta))
     P = Projeto()
     f_dest, f_texto, f_telas, f_cam = P.faixa('Destaque', 'video'), P.faixa('Texto', 'video'), P.faixa('Telas', 'video'), P.faixa('Câmera', 'video')
     f_voz, f_cliques, f_efeitos, f_cama = P.faixa('Voz', 'audio'), P.faixa('Cliques', 'audio'), P.faixa('Efeitos', 'audio'), P.faixa('Cama', 'audio')
@@ -160,7 +160,7 @@ def main():
         arq, vol, antes = SFX[nome_sfx]; ms = P.media(os.path.join(KIT, arq), 'audio')
         P.clipe(f_efeitos, ms, max(0, quadro - antes), int(round(ms['duration'] * FPS)), vol_db=vol)
 
-    destino = os.path.join(os.path.expanduser('~/Documents/Palmier Pro'), nome + '.palmier')
+    destino = os.path.join(ed, nome + '.palmier')
     P.gravar(destino)
     json.dump(textos(m), open(os.path.join(ed, 'palmier-textos.json'), 'w'), ensure_ascii=False, indent=1)
     print(f'palmier: {destino}\n  textos pra aplicar: {os.path.join(ed, "palmier-textos.json")}')

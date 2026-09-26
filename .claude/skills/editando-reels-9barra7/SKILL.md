@@ -46,14 +46,15 @@ Scripts em `.claude/skills/editando-reels-9barra7/scripts/`. Todos recebem `"<pa
      `npx remotion render <Id> <saída>.mov --codec prores --prores-profile 4444 --pixel-format yuva444p10le --image-format png`
    - tela única (números, gravação de software): HyperFrames, um projeto por tela em `Produção/_telas/<reel>-<cena>/` (modelo: `reel06-cena9`, `reel06-cena6-7`). `npx hyperframes render --format mov`
    - anotar cada tela em `4-edicao/telas.md` (o que mostra, de onde vem cada imagem)
-9. **Projeto no Palmier**: `palmier.py` grava `~/Documents/Palmier Pro/<reel>.palmier` e `4-edicao/palmier-textos.json`. Depois, pelo MCP:
+9. **Projeto no Palmier**: `palmier.py` grava o editável em `4-edicao/<reel>.palmier` (fica com o reel, nunca na pasta do Palmier) e `4-edicao/palmier-textos.json`. Depois, pelo MCP:
    - `manage_project` open no .palmier (o Palmier precisa estar aberto)
    - `add_texts` com a lista `destaque` do json na faixa 0 e a lista `texto` na faixa 1 (texto em outra faixa apaga o que estiver nela)
    - conferir com `capture_frame` o gancho, uma legenda sobre câmera, uma sobre tela, o destaque e o fechamento (o `inspect_timeline` ignora o zoom)
    **PARADA 2: avisar o William que o reel está no Palmier e esperar o ok ou os ajustes**
 10. **Exportar e conferir**: `export_project` (mp4) só depois do ok. Depois `conferir.py "<pasta>" "<mp4 exportado>"`: acerta -14 LUFS só com ganho (o Palmier exporta ~3 dB alto), confere duração, quadro preto e estalos, e grava `5-final/<reel>.mp4`
 11. **Revisor cego**: um agente que não viu nada da edição assiste ao `5-final` (quadros a cada 0,5 s + áudio) com o `padrao-edicao.md` e aponta o que quebra regra. Resultado em `4-edicao/revisor-cego.json`. Corrigir o que for erro de regra; o que for gosto vira pergunta pro William
-12. **Entrega**: caminho do mp4 e, se houver, o que o revisor levantou que pede decisão. Pacote Premiere só se a Marilia pedir (`export_project` modo xml)
+12. **Higienizar a pasta**: em `4-edicao/` ficam só o editável, os json, `audio/` (D-eq9, montagem, montagem-limpa, cama), `imagem/camera-edicao.mp4` e as telas finais com nome limpo (`telas/cena3.mov`). Versões, testes e previews vão pra `4-edicao/_arquivo/`. Renomeou arquivo que o editável usa: atualizar o `media.json` dele e conferir que nenhum link quebrou
+13. **Entrega**: caminho do mp4 e, se houver, o que o revisor levantou que pede decisão. Pacote Premiere só se a Marilia pedir (`export_project` modo xml)
 
 ## edicao.json
 
