@@ -31,7 +31,9 @@ if __name__ == '__main__':
     os.makedirs(os.path.join(pasta, '5-final'), exist_ok=True)
     final = sys.argv[3] if len(sys.argv) > 3 else os.path.join(pasta, '5-final', nome + '.mp4')
     i0, p0 = loud(exportado); ganho = round(ALVO - i0, 2)
-    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', exportado, '-map', '0:v', '-map', '0:a', '-c:v', 'copy', '-af', f'volume={ganho}dB',
+    # o Palmier às vezes exporta o áudio uns quadros mais longo que o vídeo (silêncio no fim): corta no tamanho do vídeo
+    dv = duracoes(exportado)['video']
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', exportado, '-map', '0:v', '-map', '0:a', '-c:v', 'copy', '-af', f'volume={ganho}dB,atrim=end={dv:.4f}',
                     '-c:a', 'aac', '-b:a', '320k', final], check=True)
     i1, p1 = loud(final); d = duracoes(final)
     pretos = subprocess.run(['ffmpeg', '-hide_banner', '-i', final, '-vf', 'blackdetect=d=0.03:pix_th=0.06', '-an', '-f', 'null', '-'],

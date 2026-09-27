@@ -40,10 +40,19 @@ def bordas_da_voz(x, sr):
     from scipy import signal
     v = signal.sosfiltfilt(signal.butter(4, [80, 1000], 'bandpass', fs=sr, output='sos'), x)
     def db(t): a = v[max(int(t * sr), 0):int((t + 0.01) * sr)]; return 20 * np.log10(np.sqrt((a ** 2).mean()) + 1e-12)
+    h = signal.sosfiltfilt(signal.butter(4, 3000, 'highpass', fs=sr, output='sos'), x)
+    def dbh(t): a = h[max(int(t * sr), 0):int((t + 0.01) * sr)]; return 20 * np.log10(np.sqrt((a ** 2).mean()) + 1e-12)
+    def cauda(k, lim=-46, folga=0.12, ate=0.2):
+        # o fim da palavra às vezes só tem agudo: soltura do "m", "-gem", "s" final (reel 01, 0:07, "imagem" cortado).
+        # Um estouro acima de 3 kHz colado no fim da voz (começa em até 120 ms) é da palavra; respiração vem depois e mais fraca
+        j = next((k + i * 0.01 for i in range(int(folga / 0.01)) if dbh(k + i * 0.01) > lim), None)
+        if j is None: return k
+        while j < k + ate and max(dbh(j), dbh(j + 0.01), dbh(j + 0.02)) > lim - 9: j += 0.01
+        return j
     def fim(t, lim=-56, segura=0.05, ate=0.5):
         k = t
         while k < t + ate and not all(db(k + i * 0.01) < lim for i in range(int(segura / 0.01))): k += 0.01
-        return k if k < t + ate else None
+        return cauda(k) if k < t + ate else None
     def ini(t, lim=-56, segura=0.05, ate=0.3):
         k = t
         while k > t - ate and not all(db(k - (i + 1) * 0.01) < lim for i in range(int(segura / 0.01))): k -= 0.01
