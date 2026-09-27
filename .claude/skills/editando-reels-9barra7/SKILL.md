@@ -48,11 +48,13 @@ Scripts em `.claude/skills/editando-reels-9barra7/scripts/`. Todos recebem `"<pa
      `npx remotion render <Id> <saída>.mov --codec prores --prores-profile 4444 --pixel-format yuva444p10le --image-format png`
    - tela única (números, gravação de software): HyperFrames, um projeto por tela em `Produção/_telas/<reel>-<cena>/` (modelo: `reel06-cena9`, `reel06-cena6-7`). `npx hyperframes render --format mov`
    - **gravação de tela** vem crua: antes de virar tela, olhar os quadros (um a cada 0,5 s) e decupar o que serve. Tira espera de carregamento, erro de digitação, clique perdido e navegação que não ajuda; o que sobra entra sincronizado com a palavra da fala que descreve a ação. Nunca decidir pelo nome do arquivo. O som da gravação só entra se fizer parte do conteúdo (clique vai na faixa Cliques)
+   - gancho: composição `Gancho` do Remotion (linhas do `edicao.json`) → `telas/gancho.mov`, com o som das teclas dentro. O `palmier.py` põe no 0:00 e tira o gancho dos textos
+     `npx remotion render Gancho telas/gancho.mov --props='{"duracao": 90, "linhas": ["INFO DEMAIS", "PRA IA"]}' --codec prores --prores-profile 4444 --pixel-format yuva444p10le --image-format png`
    - anotar cada tela em `4-edicao/telas.md` (o que mostra, de onde vem cada imagem)
    - material ainda não chegou em `2-arquivos/`: `telas_provisorias.py` gera cada tela como placeholder (composição `Placeholder`), no tamanho e no tempo da definitiva, dizendo o que falta e o nome do arquivo esperado. Monta-se o reel inteiro assim; quando o material chega, renderiza-se a tela real com o mesmo nome
 9. **Projeto no Palmier**: `palmier.py` grava o editável em `4-edicao/<reel>.palmier` (fica com o reel, nunca na pasta do Palmier) e `4-edicao/palmier-textos.json`. Depois, pelo MCP:
    - `manage_project` open no .palmier (o Palmier precisa estar aberto)
-   - `add_texts` com a lista `destaque` do json na faixa 0 e a lista `texto` na faixa 1 (texto em outra faixa apaga o que estiver nela)
+   - `add_texts` sem `trackIndex`, primeiro a lista `texto` e depois a `destaque` (cada chamada cria uma faixa nova no topo; o Palmier apaga as faixas vazias na primeira edição, então os índices 0 e 1 não são confiáveis). Depois renomear as duas faixas pra Texto e Destaque com `manage_tracks`
    - conferir com `capture_frame` o gancho, uma legenda sobre câmera, uma sobre tela, o destaque e o fechamento (o `inspect_timeline` ignora o zoom)
    **PARADA 2: avisar o William que o reel está no Palmier e esperar o ok ou os ajustes**
 10. **Exportar e conferir**: `export_project` (mp4) só depois do ok. Depois `conferir.py "<pasta>" "<mp4 exportado>"`: acerta -14 LUFS só com ganho (o Palmier exporta ~3 dB alto), confere duração, quadro preto e estalos, e grava `5-final/<reel>.mp4`

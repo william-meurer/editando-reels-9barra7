@@ -1,5 +1,5 @@
 import {Composition} from 'remotion';
-import {TelaComparacao, TelaImagens, TelaPlaceholder, cena3Reel06, materiaisReel06} from './Telas';
+import {TelaComparacao, TelaGancho, TelaImagens, TelaPlaceholder, cena3Reel06, materiaisReel06} from './Telas';
 
 export const Root: React.FC = () => (
 	<>
@@ -13,6 +13,10 @@ export const Root: React.FC = () => (
 		calculateMetadata={({props}) => ({durationInFrames: (props as {duracao: number}).duracao})} />	{/* telas com imagens reais: props e duração vêm do --props (ver Telas.tsx, TelaImagens) */}
 	<Composition id="Imagens" component={TelaImagens as unknown as React.FC<Record<string, unknown>>} width={1080} height={1920} fps={30}
 		durationInFrames={90} defaultProps={{duracao: 90, paineis: []} as unknown as Record<string, unknown>}
+		calculateMetadata={({props}) => ({durationInFrames: (props as {duracao: number}).duracao})} />
+	{/* gancho digitado: linhas e duração vêm do --props (ver Telas.tsx, TelaGancho) */}
+	<Composition id="Gancho" component={TelaGancho as unknown as React.FC<Record<string, unknown>>} width={1080} height={1920} fps={30}
+		durationInFrames={90} defaultProps={{duracao: 90, linhas: ['INFO DEMAIS', 'PRA IA']} as unknown as Record<string, unknown>}
 		calculateMetadata={({props}) => ({durationInFrames: (props as {duracao: number}).duracao})} />
 	</>
 );

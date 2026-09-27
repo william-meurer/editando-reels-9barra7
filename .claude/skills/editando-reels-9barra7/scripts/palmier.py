@@ -124,11 +124,11 @@ def empurra_kf(base, p0, p1, dur):
     return dict(scaleTrack=dict(keyframes=[k(0, a), k(dur - 1, b)]), positionTrack=dict(keyframes=[kp(0, a), kp(dur - 1, b)]))
 
 
-def textos(m):
-    """Entradas prontas pro add_texts do Palmier (uma lista por faixa)."""
+def textos(m, gancho_tela=False):
+    """Entradas prontas pro add_texts do Palmier (uma lista por faixa). Com o gancho digitado (telas/gancho.mov), ele não vai como texto."""
     t_destaque, t_texto = [], []
     g = m.get('gancho')
-    if g:
+    if g and not gancho_tela:
         t_texto.append(dict(startFrame=0, endFrame=int(round(g['dur_s'] * FPS)), content='\n'.join(g['linhas']).upper(), animation='popIn',
                             style=dict(ESTILO_DESTAQUE, fontCase='mixed'), transform=dict(x=0.5, y=0.5)))
     for b in m['legendas']:
@@ -150,6 +150,15 @@ def main():
     f_dest, f_texto, f_jan, f_telas, f_cam = P.faixa('Destaque', 'video'), P.faixa('Texto', 'video'), P.faixa('Janela', 'video'), P.faixa('Telas', 'video'), P.faixa('Câmera', 'video')
     f_voz, f_cliques, f_efeitos, f_cama = P.faixa('Voz', 'audio'), P.faixa('Cliques', 'audio'), P.faixa('Efeitos', 'audio'), P.faixa('Cama', 'audio')
     fala = m['quadros'] - m['fechamento']
+
+    # gancho digitado (Remotion, composição Gancho): tela com transparência no 0:00 e o som das teclas ligado na faixa Cliques
+    gancho_mov = os.path.join(ed, 'telas', 'gancho.mov')
+    if m.get('gancho') and os.path.exists(gancho_mov):
+        mg = P.media(gancho_mov, 'video'); dg = int(round(mg['duration'] * FPS)); lg = uid()
+        P.clipe(f_jan, mg, 0, dg, link=lg)   # na faixa Janela (livre no gancho): na faixa Texto o add_texts apagaria
+        if mg['hasAudio']: P.clipe(f_cliques, mg, 0, dg, tipo='audio', link=lg, vol_db=-4.0)
+    elif m.get('gancho'):
+        print('  AVISO: sem telas/gancho.mov, o gancho vai como texto do Palmier (typewriter alinha à esquerda). Renderizar a composição Gancho')
 
     # telas por cima da câmera (o som delas, os cliques, vai ligado na faixa Cliques)
     cobre = []
@@ -245,7 +254,7 @@ def main():
 
     destino = os.path.join(ed, nome + '.palmier')
     P.gravar(destino)
-    json.dump(textos(m), open(os.path.join(ed, 'palmier-textos.json'), 'w'), ensure_ascii=False, indent=1)
+    json.dump(textos(m, os.path.exists(gancho_mov)), open(os.path.join(ed, 'palmier-textos.json'), 'w'), ensure_ascii=False, indent=1)
     print(f'palmier: {destino}\n  textos pra aplicar: {os.path.join(ed, "palmier-textos.json")}')
 
 

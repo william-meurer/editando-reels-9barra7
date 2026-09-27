@@ -306,3 +306,47 @@ export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duraca
 		</AbsoluteFill>
 	);
 };
+
+// Gancho digitado (padrao-edicao.md, "Texto do gancho"): o texto já no lugar final, centralizado, e as letras aparecem uma a uma
+// com cursor, cada uma com o som de uma tecla (kit/sfx/teclado, sintetizado). O pop-in e o typewriter do Palmier não servem:
+// o primeiro sai como bloco na exportação, o segundo alinha à esquerda e demora a tela toda pra terminar.
+export type Gancho = {duracao: number; linhas: string[]; inicio?: number; ritmo?: number};
+const TECLAS = [1, 2, 3, 4, 5, 6, 7, 8].map((i) => `kit/sfx/teclado/tecla-0${i}.wav`);
+const tempos = (linhas: string[], inicio: number, ritmo: number) => {
+	// um quadro por letra, com variação fixa (2 a 3 quadros) pra soar como gente digitando; espaço demora um pouco mais
+	const out: number[] = []; let q = inicio; let semente = 7;
+	for (const l of linhas) for (const ch of l) {
+		out.push(q); semente = (semente * 9301 + 49297) % 233280;
+		q += ritmo + (semente / 233280 > 0.5 ? 1 : 0) + (ch === ' ' ? 1 : 0);
+	}
+	return out;
+};
+export const TelaGancho: React.FC<Gancho> = ({linhas, inicio = 2, ritmo = 2}) => {
+	const k = useCurrentFrame();
+	const t = tempos(linhas, inicio, ritmo);
+	const n = t.filter((q) => q <= k).length;                     // letras já digitadas
+	const fim = t[t.length - 1];
+	const pisca = k > fim + 4 && Math.floor((k - fim) / 14) % 2 === 1;
+	let i = 0;
+	return (
+		<AbsoluteFill style={{alignItems: 'center', justifyContent: 'center'}}>
+			<div style={{fontFamily: 'DM Sans', fontWeight: 700, fontSize: 128, lineHeight: '129px', letterSpacing: -8.9, color: '#fff', textAlign: 'center'}}>
+				{linhas.map((l, li) => (
+					<div key={li} style={{whiteSpace: 'pre'}}>
+						{[...l].map((ch, ci) => {
+							const j = i++; const vis = j < n;
+							return <span key={ci} style={{position: 'relative', visibility: vis ? 'visible' : 'hidden'}}>{ch}
+								{j === n - 1 && !pisca && <span style={{position: 'absolute', visibility: 'visible', right: -16, top: 18, width: 8, height: 94, background: '#fff'}} />}
+							</span>;
+						})}
+					</div>
+				))}
+			</div>
+			{t.map((q, j) => (
+				<Sequence key={j} from={q} layout="none">
+					<Audio src={staticFile([...linhas.join('')][j] === ' ' ? 'kit/sfx/teclado/espaco.wav' : TECLAS[j % TECLAS.length])} volume={0.55} />
+				</Sequence>
+			))}
+		</AbsoluteFill>
+	);
+};
