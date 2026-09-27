@@ -20,14 +20,17 @@ KIT = os.path.join(AQUI, '..', '..', '..', '..', 'Produção', 'kit')
 FPS, SR, FADE, FECHAMENTO = 30, 48000, 0.030, 4.0
 LARGURA_MAX = 720
 FONTE_LEGENDA = ImageFont.truetype(os.path.join(KIT, 'fonte', 'DMSans-Medium.ttf'), 54)
-FINAIS_PROIBIDOS = set('e de do da que a o os as um uma pra com em no na se só teu tua meu minha esse essa isso'.split())
 INICIOS_FORTES = set('que mas porque quando onde'.split())   # a linha nova começa melhor nelas
-INICIOS_BONS = set('que e com pra para em na no nas nos de do da mas porque sem até junto mantendo quando onde se ou está esta é foi foram vai fica'.split())
 
 
 def norm(t):
     t = unicodedata.normalize('NFD', (t or '').lower())
     return re.sub(r'[^a-z0-9]+', '', ''.join(c for c in t if unicodedata.category(c) != 'Mn'))
+
+
+# o texto vem com acento ("só"), a comparação é sem
+INICIOS_BONS = set(norm(w) for w in 'que e com pra para em na no nas nos de do da mas porque sem até junto mantendo quando onde se ou está esta é foi foram vai fica'.split())
+FINAIS_PROIBIDOS = set(norm(w) for w in 'e de do da que a o os as um uma pra com em no na se só teu tua meu minha esse essa isso'.split())
 
 
 # ---------------- linha do tempo e áudio ----------------
@@ -156,19 +159,20 @@ def legendas(tl, ilhas, gancho_s, destaque):
         for j, g in enumerate(grupos):
             ini = t['out_f0'] / FPS if j == 0 else g[0]['ini']
             fim = grupos[j + 1][0]['ini'] if j + 1 < len(grupos) else fim_tr
-            blocos.append(dict(palavras=[x['t'] for x in g], ini=ini, fim=fim))
+            blocos.append(dict(palavras=[x['t'] for x in g], ini=ini, fim=fim, trecho=t['num']))
     # destaque: o bloco que o contém fica só com o que vem antes dele e sai quando ele entra
     if destaque:
         di, df = destaque['ini'], destaque['fim']
         novos = []
         for b in blocos:
-            if b['fim'] <= di or b['ini'] >= df: novos.append(b); continue
-            antes = [w for w in palavras if b['ini'] <= w['ini'] < di and w['t'] in b['palavras']]
+            if b['fim'] <= di + 0.01 or b['ini'] >= df - 0.01: novos.append(b); continue   # df vem arredondado: o bloco que começa colado no fim não é do destaque
+            antes = [w for w in palavras if b['ini'] <= w['ini'] < di - 0.01 and w['t'] in b['palavras']]
             if b['ini'] < di and antes:
-                novos.append(dict(palavras=b['palavras'][:len(antes)], ini=b['ini'], fim=di))
+                novos.append(dict(b, palavras=b['palavras'][:len(antes)], fim=di))
         blocos = novos
     out = []
     for b in blocos:
+        if gancho_s and b['trecho'] == tl[0]['num']: continue   # a frase do gancho já está na tela: o resto dela piscaria depois dos 3 s
         ini = max(b['ini'], gancho_s)
         if b['fim'] - ini < 0.6: continue
         out.append(dict(linhas=quebrar(' '.join(b['palavras'])) or [' '.join(b['palavras'])], ini=round(ini, 3), fim=round(b['fim'], 3)))
@@ -206,6 +210,7 @@ def main():
     virada = next((t['out_f0'] for t in tl if t['num'] == ed.get('virada')), None)
     telas = [dict(t, quadro=next(x['out_f0'] for x in tl if x['num'] == t['trecho'])) for t in ed.get('telas', [])]
     json.dump(dict(fps=FPS, trechos=tl, legendas=leg, palavras=palavras, gancho=gancho, destaque=destaque, virada=virada, telas=telas,
+                   cama=ed.get('cama'), sfx=ed.get('sfx'),
                    quadros=n_fala + int(FECHAMENTO * FPS), fechamento=int(FECHAMENTO * FPS)),
               open(os.path.join(ed_dir, 'montagem.json'), 'w'), ensure_ascii=False, indent=1)
     print(f'montar: {len(tl)} trechos, {n_fala / FPS:.2f}s de fala + {FECHAMENTO:.0f}s de fechamento, {len(leg)} blocos de legenda')

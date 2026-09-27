@@ -1,7 +1,7 @@
 # Padrão de edição
 
-Vale igual para os 36 reels do teste. Mudar qualquer item no meio do teste invalida a comparação.
-Modelo: reel 06 (29.09 Bastidor de projeto real), aprovado em 26/09. Final em `Produção/Lote 1 - 22.09 a 05.10/06 - 29.09 Bastidor de projeto real/5-final/`.
+Duas camadas (27/09): o que está em **Definido** vale igual pra todos os reels (a identidade). O que varia está na **Receita por família**: cada família de roteiro tem o seu jeito de abrir, os seus formatos de tela, a sua trilha e os seus efeitos, fixos dentro da família. Assim o feed não fica todo igual e o teste compara família com família.
+Modelo da família Bastidor: reel 06 (29.09), aprovado em 26/09. Final em `Produção/Lote 1 - 22.09 a 05.10/06 - 29.09 Bastidor de projeto real/5-final/`.
 
 ## Definido
 
@@ -16,9 +16,9 @@ Modelo: reel 06 (29.09 Bastidor de projeto real), aprovado em 26/09. Final em `P
 | Primeiro plano | recorte digital do take em 4K, nunca movimento de câmera |
 | Cor da imagem | look C (contraste leve, calor leve, nitidez leve), aplicado na imagem de edição (`imagem.py`). A cor E foi reprovada |
 | Texto do gancho | 3 primeiros segundos, em todos. DM Sans Bold ~128 px (72 no Palmier), branca, sem sombra, CAIXA ALTA, 2 linhas no centro exato do vídeo, letras bem juntas (-5) e entrelinha apertada (-22), entra palavra por palavra (pop-in) junto com o grave. Texto = a primeira frase falada, enxuta (edicao.json). Sem legenda nesses 3 s |
-| Palavra-chave (destaque) | a ideia que fecha o reel, no máximo uma por reel, nunca no gancho. Mesmo estilo do gancho, em minúscula, no centro exato do vídeo, com pop-in e o som "pop". Fica até o fim do trecho. A legenda some enquanto ela está na tela |
-| Tela (imagem, render, software) | sem fundo preto. Tela dividida na vertical: o material ocupa a metade de cima inteira (1080×960, uma imagem por vez, a seguinte entra empurrando; o que importa abaixo de y 208) e a Marilia fica na metade de baixo (a câmera desce pra centerY 0,695, rosto logo abaixo da emenda, queixo acima de y ~1330). Sai em corte seco |
-| Quando cobrir com tela | sempre que a fala aponta pra algo visível (material, luz, número, ferramenta). Trecho longo de rosto falando de coisa concreta é sinal de cobertura faltando |
+| Palavra-chave (destaque) | no máximo uma por reel, nunca no gancho, e só se houver uma ideia que valha (pode não ter). Entra onde a ideia cai, não numa posição fixa: no meio do reel também serve. Mesmo estilo do gancho, em minúscula, no centro exato do vídeo, com pop-in. O som "pop" vem da receita da família. Fica até o fim do trecho. A legenda some enquanto ela está na tela |
+| Tela (imagem, render, software) | sem fundo preto. Formato escolhido no cardápio abaixo, conforme a receita da família e o que o roteiro pede na cena. **Cada reel usa pelo menos dois formatos.** Sai em corte seco |
+| Quando cobrir com tela | sempre que a fala aponta pra algo visível (material, luz, número, ferramenta). Trecho longo de rosto falando de coisa concreta é sinal de cobertura faltando. A indicação visual do roteiro (tela cheia, wipe, abrir no resultado, insert, zoom lento) é o ponto de partida: não se achata tudo num formato só |
 | Marcação | contorno branco em volta do que a fala aponta, nunca preenchido, sombra escura fina, desenhado em 8 quadros, preso na palavra (±3 quadros). Um clique por marcação |
 | Número na tela | DM Sans Bold ~128 px, branca, sem sombra, letras juntas, no centro da área visível, com pop |
 | Selo | pílula DM Sans bold, caixa alta, ~36 px, texto preto, perto do que aponta. Roxo `#A4A1F3` pro errado/antes ("O TOM MUDOU"), verde `#B3FF9F` pro certo/depois |
@@ -27,12 +27,42 @@ Modelo: reel 06 (29.09 Bastidor de projeto real), aprovado em 26/09. Final em `P
 | Tipografia | DM Sans em tudo |
 | Cores | base preto e branco. Verde e roxo só em marca-texto e selo |
 | Transições | corte seco. Na tela dividida, a imagem seguinte entra empurrando (8 quadros) |
-| Efeitos sonoros | só estes (`kit/sfx/`), com o volume do `palmier.py`: grave + estalo no 0:00 (gancho), whoosh na entrada da primeira tela, subida que resolve no corte da virada, pop no destaque, clique de mouse (estilo papelão) em cada marcação. Nunca dois a menos de 3 s, nada por cima de palavra que precisa ser entendida |
-| Cama sonora | uma só pra todos: "Technology" (prettyjohn1, Pixabay, `kit/trilha/`). Abafada até a virada, abre inteira nela, abaixa sozinha na fala (~16-18 dB abaixo da voz), sobe nas pausas e no fechamento, -3 dB em 1-3,5 kHz (`cama.py`) |
-| Virada | o ponto em que o reel sai do problema e entra na solução (no reel 06, o "Por isso"). Marcada no edicao.json: nela a cama abre e a subida resolve |
+| Efeitos sonoros | só os do `kit/sfx/`, com o volume do `palmier.py`. Cada efeito nasce de algo que acontece na tela (troca grande de imagem, marcação, número, corte da virada), nunca de uma posição fixa. A lista de cada reel fica no `edicao.json` ("sfx"), dentro do que a receita da família permite. Nunca dois a menos de 3 s, nada por cima de palavra que precisa ser entendida |
+| Cama sonora | uma trilha do banco (`kit/trilha/`, abaixo), tratada igual em todas: abaixa sozinha na fala (~16-18 dB abaixo da voz), sobe nas pausas e no fechamento, -3 dB em 1-3,5 kHz (`cama.py`). Como ela marca a virada vem da receita da família: abre (abafada até a virada), silêncio (some 0,6 s antes e volta cheia) ou plana |
+| Virada | o ponto em que o reel sai do problema e entra na solução (no reel 06, o "Por isso"). Marcada no edicao.json. O que acontece nela (cama, subida ou nada) vem da receita da família |
 | Fechamento | depois da fala fixa, último quadro congelado, escurece de leve em 0,5 s e entra o logo 9barra7 Academy em branco no centro (`kit/fechamento/`). Sem @9barra7. 4 s |
 | Fala fixa do fim | "Eu sou a Marilia, do 9barra7, e te ensino a renderizar com IA respeitando e valorizando o teu projeto. Me acompanha aqui pra ver mais conteúdos assim." |
 | Zona livre | as do Checklist de gravação (em 1080×1920): nada importante até y 208 nem a partir de y 1509; nada à direita de x 904 abaixo de y 876 (botões). Vale pra legenda, gancho, destaque, marcação e tela |
+
+## Cardápio de formatos de tela
+
+| Formato | Como fica | Quando |
+|---|---|---|
+| dividida | material na metade de cima (1080×960, o que importa abaixo de y 208), Marilia na metade de baixo. A câmera desce o quanto der até centerY 0,695 com o queixo acima de y 1330 (o `palmier.py` calcula pelo rosto) | explicar algo olhando pro material, com ela reagindo |
+| cheia | o material ocupa a tela inteira (o que importa entre y 208 e 1509), voz dela em off, legenda por cima | mostrar o resultado, abrir no resultado, imagem que precisa de tamanho |
+| janela | material em tela cheia, Marilia numa janelinha retangular de cantos arredondados (3:4, 280 px, como a câmera dupla do iPhone), flutuando no alto à direita logo abaixo de y 208, com sombra leve | gravação de tela e conversa com a IA: a tela manda, ela acompanha |
+| cortina | uma imagem varre a outra (antes → depois), dentro da cheia ou da dividida | antes/depois do mesmo ângulo |
+| zoom | aproximação lenta até o detalhe, com contorno no fim | erro pequeno que precisa ser visto (puxador, luminária) |
+| apoio | vídeo de apoio em tela cheia (insert) | analogia, coisa fora do render |
+| número | número ou palavra grande em tela cheia, fundo da própria imagem escurecido | dado que fecha o argumento |
+
+Dentro de uma tela, a imagem seguinte entra empurrando (8 quadros), em cortina ou em corte seco.
+
+## Receita por família
+
+| Família | Abre em | Formatos | Virada | Efeitos | Destaque |
+|---|---|---|---|---|---|
+| Resultado antes da explicação | o resultado em tela cheia, gancho sobre a imagem, voz em off | cheia, cortina, dividida | silêncio | impacto no 0:00, whoosh na primeira troca grande de imagem | sim, onde a ideia cai |
+| Erro custoso | a Marilia (P1 empurra), gancho | zoom, cheia, dividida | abre + subida | impacto, clique nas marcações, subida | a palavra do erro, pode ser no meio |
+| Contradição de mercado | a Marilia, gancho | dividida, número | plana, marcada pelo corte pra ÊNFASE | impacto, pop no número | a tese, com pop |
+| Gravação de tela | a Marilia com o gancho, e logo a tela | janela, cheia | plana | impacto, clique nas marcações, sem whoosh | não (usa selo) |
+| Peça livre (analogia) | a Marilia, gancho | apoio, cheia | silêncio | impacto, whoosh na entrada do apoio | a frase de fechamento |
+| Bastidor de projeto real | a Marilia (reel 06) | dividida, número | abre + subida | impacto, whoosh, subida, pop | como o 06 |
+| Comparação com critério | a comparação em tela cheia, gancho-pergunta sobre ela | cheia, cortina, dividida | abre | impacto, whoosh em cada troca da prancha | sim |
+
+### Trilhas
+
+Banco aprovado em 27/09, em `kit/trilha/` (arquivos `cama - …`): 4 de piano (Inspiring Minimal Piano, Inspiring Piano, Piano Music, Piano inspiring), 4 de lofi (Chill Lamp Light, Chill Lofi, Lofi Chill, Lofi Chill Vlog Beats), 4 de house (as duas Deep House e as duas Minimal House) e a "Technology" do reel 06. Distribuição: dois reels seguidos nunca têm a mesma trilha nem o mesmo estilo, e no mesmo lote uma trilha não se repete. A escolha fica no `edicao.json` ("cama").
 
 ## Legenda da fala
 

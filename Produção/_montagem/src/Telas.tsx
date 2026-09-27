@@ -1,3 +1,4 @@
+import React from 'react';
 // Telas animadas do reel, renderizadas à parte em ProRes 4444 (com transparência) e colocadas como camada no Palmier.
 // Regras: .claude/skills/editando-reels-9barra7/padrao-edicao.md. Tela dividida (26/09): o material ocupa a metade de cima
 // (1080x960, sem fundo preto, o que importa abaixo de y 208 por causa da interface do Instagram) e a Marilia aparece
@@ -123,4 +124,62 @@ export const materiaisReel06: Comparacao = {
 		{quadro: 68, img: 0, cx: 520, cy: 1180, rx: 430, ry: 220},
 	],
 	duracao: 192,
+};
+
+// Tela provisória quando o material ainda não chegou (2-arquivos vazio): no tamanho e no tempo da tela definitiva,
+// diz o que falta, o nome do arquivo esperado e o formato (padrao-edicao.md, cardápio). Troca-se pelo render real sem mexer na montagem.
+// area: metade (tela dividida) ou cheia (cheia, círculo, apoio, número). entrada: empurra | cortina | corte. movimento: zoom.
+export type Painel = {quadro: number; titulo: string; arquivo: string; obs?: string; entrada?: 'empurra' | 'cortina' | 'corte'; movimento?: 'zoom'; formato?: string};
+export type Placeholder = {duracao: number; paineis: Painel[]; area?: 'metade' | 'cheia'};
+
+const PainelVazio: React.FC<{p: Painel; cheia: boolean; i: number}> = ({p, cheia, i}) => {
+	const k = useCurrentFrame();
+	const z = p.movimento === 'zoom' ? interpolate(k, [p.quadro, p.quadro + 150], [1, 1.12], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}) : 1;
+	return (
+		<div style={{position: 'absolute', inset: 0, background: i % 2 ? '#232323' : '#1b1b1b', overflow: 'hidden'}}>
+			<div style={{position: 'absolute', left: 28, right: 28, top: 216, bottom: cheia ? 1920 - 1500 : 28, border: '3px dashed rgba(255,255,255,.45)', borderRadius: 18,
+				display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 26, padding: '0 64px', textAlign: 'center',
+				transform: `scale(${z})`}}>
+				<div style={{fontFamily: 'DM Sans', fontWeight: 700, fontSize: 30, letterSpacing: '0.08em', color: '#1b1b1b', background: '#fff',
+					padding: '8px 20px', borderRadius: 999}}>FALTA MATERIAL{p.formato ? ` · ${p.formato.toUpperCase()}` : ''}</div>
+				<div style={{fontFamily: 'DM Sans', fontWeight: 700, fontSize: 54, lineHeight: 1.12, color: '#fff'}}>{p.titulo}</div>
+				{p.obs && <div style={{fontFamily: 'DM Sans', fontWeight: 500, fontSize: 32, lineHeight: 1.3, color: 'rgba(255,255,255,.75)'}}>{p.obs}</div>}
+				<div style={{fontFamily: 'DM Sans', fontWeight: 500, fontSize: 28, color: 'rgba(255,255,255,.5)'}}>2-arquivos/{p.arquivo}</div>
+			</div>
+		</div>
+	);
+};
+
+export const TelaPlaceholder: React.FC<Placeholder> = ({paineis, area = 'metade'}) => {
+	const k = useCurrentFrame();
+	const cheia = area === 'cheia';
+	const W = M.w, Hh = cheia ? 1920 : M.h;
+	const ease = {extrapolateLeft: 'clamp' as const, extrapolateRight: 'clamp' as const, easing: Easing.inOut(Easing.cubic)};
+	return (
+		<AbsoluteFill>
+			<div style={{position: 'absolute', left: 0, top: 0, width: W, height: Hh, overflow: 'hidden'}}>
+				{paineis.map((p, i) => {
+					const prox = paineis[i + 1];
+					const fimProx = prox ? prox.quadro + (prox.entrada === 'cortina' ? 20 : prox.entrada === 'corte' ? 0 : 8) : Infinity;
+					if (k < p.quadro || k >= fimProx) return null;
+					const e = p.entrada ?? 'empurra';
+					let estilo: React.CSSProperties = {position: 'absolute', inset: 0};
+					if (i > 0 && e === 'empurra') {
+						const t = interpolate(k, [p.quadro, p.quadro + 8], [0, 1], ease);
+						estilo.transform = `translateX(${(1 - t) * W}px)`;
+					} else if (i > 0 && e === 'cortina') {
+						const t = interpolate(k, [p.quadro, p.quadro + 20], [0, 100], ease);
+						estilo.clipPath = `inset(0 ${100 - t}% 0 0)`;
+					}
+					if (prox && (prox.entrada ?? 'empurra') === 'empurra' && k >= prox.quadro) {
+						const t = interpolate(k, [prox.quadro, prox.quadro + 8], [0, 1], ease);
+						estilo.transform = `translateX(${-t * W}px)`;
+					}
+					return <React.Fragment key={i}><div style={{...estilo, zIndex: i}}><PainelVazio p={p} cheia={cheia} i={i} /></div>
+						{i > 0 && e === 'cortina' && k < p.quadro + 20 && <div style={{position: 'absolute', top: 0, bottom: 0, width: 6, marginLeft: -3, background: '#fff', zIndex: 99,
+							left: `${interpolate(k, [p.quadro, p.quadro + 20], [0, 100], ease)}%`}} />}</React.Fragment>;
+				})}
+			</div>
+		</AbsoluteFill>
+	);
 };

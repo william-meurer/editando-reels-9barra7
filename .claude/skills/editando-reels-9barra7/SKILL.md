@@ -11,7 +11,7 @@ O William não edita: eu monto tudo e ele revisa por escrito. O editor é o **Pa
 
 **Duas paradas pra aprovação, e só duas:** o roteiro de edição (antes de montar) e o reel montado no Palmier (antes de exportar). O resto roda direto.
 
-Todas as regras visuais e sonoras estão em `padrao-edicao.md`. Nada fora dele. Modelo: reel 06.
+Todas as regras visuais e sonoras estão em `padrao-edicao.md`: a identidade (igual pra todos) e a receita de cada família de roteiro (abertura, formatos de tela, trilha, virada, efeitos). Nada fora dele. Os reels não saem todos iguais: cada um segue a receita da sua família e usa pelo menos dois formatos de tela.
 
 ## Estrutura
 
@@ -46,6 +46,7 @@ Scripts em `.claude/skills/editando-reels-9barra7/scripts/`. Todos recebem `"<pa
      `npx remotion render <Id> <saída>.mov --codec prores --prores-profile 4444 --pixel-format yuva444p10le --image-format png`
    - tela única (números, gravação de software): HyperFrames, um projeto por tela em `Produção/_telas/<reel>-<cena>/` (modelo: `reel06-cena9`, `reel06-cena6-7`). `npx hyperframes render --format mov`
    - anotar cada tela em `4-edicao/telas.md` (o que mostra, de onde vem cada imagem)
+   - material ainda não chegou em `2-arquivos/`: `telas_provisorias.py` gera cada tela como placeholder (composição `Placeholder`), no tamanho e no tempo da definitiva, dizendo o que falta e o nome do arquivo esperado. Monta-se o reel inteiro assim; quando o material chega, renderiza-se a tela real com o mesmo nome
 9. **Projeto no Palmier**: `palmier.py` grava o editável em `4-edicao/<reel>.palmier` (fica com o reel, nunca na pasta do Palmier) e `4-edicao/palmier-textos.json`. Depois, pelo MCP:
    - `manage_project` open no .palmier (o Palmier precisa estar aberto)
    - `add_texts` com a lista `destaque` do json na faixa 0 e a lista `texto` na faixa 1 (texto em outra faixa apaga o que estiver nela)
@@ -64,8 +65,10 @@ Formato do reel 06 (`Produção/Lote 1.../06 .../4-edicao/edicao.json`):
 - `fora`: ilhas descartadas e o motivo (recomeço, hesitação, versão antiga)
 - `gancho`: texto enxuto da primeira frase, `linhas` (2, CAIXA ALTA), `dur_s` 3
 - `virada`: nº do trecho onde o reel sai do problema e entra na solução. É ele que dá a dinâmica da cama, não o roteiro
-- `destaque`: texto (2 linhas com `\n`), trecho, `comeca_em` (palavra da fala em que entra). No máximo um
-- `telas`: arquivo (em `4-edicao/telas/`) e trecho em que entra
+- `destaque`: texto (2 linhas com `\n`), trecho, `comeca_em` (palavra da fala em que entra). No máximo um, ou `null` quando a receita não pede
+- `cama`: `arquivo` (em `kit/trilha/`), `inicio` (s, opcional), `virada` (abre | silencio | plana), da receita da família
+- `sfx`: lista de efeitos, cada um com `tipo` (impacto, whoosh, subida, pop, clique), `trecho` e `palavra` opcionais. Sem a lista, vale o pacote do reel 06
+- `telas`: arquivo (em `4-edicao/telas/`), `layout` (dividida | cheia | janela), trecho em que entra, `ate_trecho` (último que ela cobre) e `paineis` (uma imagem por vez: trecho, `palavra` em que entra, titulo, arquivo esperado em `2-arquivos/`, obs). Várias imagens seguidas numa tela só, pra seguinte entrar empurrando
 
 O `roteiro-de-edicao.md` é a versão pra ler: trecho a trecho com plano, cobertura, gancho, virada, destaque e o que ficou de fora.
 
@@ -76,9 +79,11 @@ O `roteiro-de-edicao.md` é a versão pra ler: trecho a trecho com plano, cobert
 | `NÃO IDENTIFICADO` no organizar | abrir o arquivo, ouvir o começo, e ligar manualmente em `3-takes/` |
 | `SEM TAKE DE CÂMERA` | avisar quem gravou, não inventar corte |
 | `FALTOU cena N` no decupar | a frase não foi falada ou mudou no refino. Conferir contra o .docx antes de seguir |
+| palavra com mais de 0,9 s na ilha, ou fala sem texto no meio dela | o Whisper engoliu um recomeço (no reel 02, "Então, além de todas as informações" duas vezes numa ilha só). Retranscrever só aquele pedaço e cortar na última versão |
 | ela regravou só o fim de uma frase | partir o trecho em dois no `edicao.json` (começo da 1ª versão + fim da regravada) |
 | arquivo `audio` no mapa (lapela gravada à parte) | a sincronização pela palma ainda não existe. Avisar antes de montar |
 | `.docx` mais novo que o `roteiro.json` | o roteiro foi refinado. Atualizar o json a partir do docx antes de decupar |
+| mediana do `rosto.json` fora de x 900-1200, y 900-1150 | o detector pegou outra coisa (nos reels 02-05, a luminária do fundo). Abrir um quadro do take antes de rodar o `imagem.py` |
 | legenda caindo no rosto na tela dividida | subir a câmera (centerY), nunca a legenda |
 | `AVISOS` no conferir | resolver antes de entregar |
 
@@ -99,6 +104,7 @@ Conferir com `estalos_hf.detectar(x, sr, 6.0)`: no reel 06, bruto 291, tratado ~
 - o projeto precisa estar aberto na sessão (`manage_project` open) antes de qualquer edição
 - texto: tamanho em pontos do canvas (px = pt × 1,778); negrito precisa de `bold: true`
 - não lê qtrle: tela com transparência sempre em ProRes 4444
+- clipe com transparência que começa no meio de outro faz o quadro inteiro sumir na exportação: a janela sai num arquivo só por tela (o `palmier.py` já junta)
 - imagem PNG sai mais quente que vídeo: quadro congelado é sempre vídeo parado (o `palmier.py` já faz)
 - a soma de áudio exporta ~3 dB alta (o `conferir.py` corrige)
 - não gastar crédito de geração do Palmier (música, efeito, imagem) quando há biblioteca grátis

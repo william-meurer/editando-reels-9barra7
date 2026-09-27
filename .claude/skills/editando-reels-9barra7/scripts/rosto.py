@@ -30,6 +30,9 @@ def medir(video):
         g = np.frombuffer(r, np.uint8).reshape(int(h * esc), int(w * esc))
         for x, y, fw, fh in cas.detectMultiScale(g, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30)):
             x, y, fw = x / esc, y / esc, fw / esc
+            # ela sentada, a ~2 m: o rosto tem 250-500 px no 4K. Luminária e janela do fundo também viram "rosto"
+            # e, paradas, ganham do rosto no voto (reels 02-05 do lote 1): fora da faixa, descarta
+            if not 200 <= fw <= 600: continue
             cand.append((float(t), x + fw / 2, y + fw / 2, fw))
     if not cand: return []
     # o grupo mais frequente (grade de 150 px) é o rosto
