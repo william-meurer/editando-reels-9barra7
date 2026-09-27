@@ -37,15 +37,15 @@ const Selo: React.FC<{r: Rotulo; s: number}> = ({r, s}) => {
 };
 
 // contorno desenhado em 8 quadros, depois segura
-const Contorno: React.FC<{m: Marca; w: number; h: number; s: number}> = ({m, w, h, s}) => {
+const Contorno: React.FC<{m: Marca; w: number; h: number; s: number; cor?: string}> = ({m, w, h, s, cor = '#fff'}) => {
 	const k = useCurrentFrame();
 	const p = interpolate(k, [0, 8], [0, 1], {extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
 	const perim = Math.PI * (3 * (m.rx + m.ry) - Math.sqrt((3 * m.rx + m.ry) * (m.rx + 3 * m.ry)));
 	return (
 		<svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{position: 'absolute', left: 0, top: 0, overflow: 'visible'}}>
-			<ellipse cx={m.cx} cy={m.cy} rx={m.rx} ry={m.ry} fill="none" stroke="#fff" strokeWidth={8.5 / s}
+			<ellipse cx={m.cx} cy={m.cy} rx={m.rx} ry={m.ry} fill="none" stroke={cor} strokeWidth={8.5 / s}
 				strokeDasharray={perim} strokeDashoffset={perim * (1 - p)} strokeLinecap="round"
-				style={{filter: `drop-shadow(0 ${1.2 / s}px ${2.4 / s}px rgba(0,0,0,.55))`}} />
+				style={{filter: cor === '#fff' ? `drop-shadow(0 ${1.2 / s}px ${2.4 / s}px rgba(0,0,0,.55))` : 'none'}} />
 		</svg>
 	);
 };
@@ -190,10 +190,16 @@ export const TelaPlaceholder: React.FC<Placeholder> = ({paineis, area = 'metade'
 export type MarcaImg = {quadro: number; cx: number; cy: number; rx: number; ry: number};
 export type Escurece = {quadro: number; x: number; y: number; w: number; h: number};
 export type PainelImg = {src: string; w: number; h: number; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte';
-	ajuste?: 'cobre' | 'contem'; foco?: [number, number]; zoom?: [number, number]; marcas?: MarcaImg[]; escurece?: Escurece[]; rotulos?: Rotulo[]};
-export type TrechoPrompt = {texto: string; rotulo?: string; marca?: number};   // marca: quadro em que o marca-texto verde passa
+	ajuste?: 'cobre' | 'contem'; foco?: [number, number]; zoom?: [number, number]; marcas?: MarcaImg[]; escurece?: Escurece[]; rotulos?: Rotulo[];
+	cartao?: boolean;      // a imagem como um cartão: margem, cantos arredondados e sombra (planta, print), em vez de encostar nas bordas
+	contorno?: string};    // cor do contorno: branco (padrão, sobre imagem escura) ou preto sobre planta clara
+export type TrechoPrompt = {texto: string; rotulo?: string; marca?: number; cor?: string};   // marca: quadro em que o marca-texto passa (verde, ou cor: vermelho pro que fica de fora)
 export type PainelPrompt = {tipo: 'promptador'; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte'; titulo?: string; trechos: TrechoPrompt[]};
-export type TelaImg = {duracao: number; area?: 'metade' | 'cheia'; paineis: (PainelImg | PainelPrompt)[]};
+// várias imagens juntas na mesma tela (ex.: a planta em cima e a imagem gerada embaixo), cada uma na sua caixa [x, y, w, h];
+// entra: quadro em que a imagem sobe pra caixa (sem ele, já está lá quando o painel entra)
+export type ItemGrupo = PainelImg & {caixa: [number, number, number, number]; entra?: number};
+export type PainelGrupo = {tipo: 'grupo'; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte'; itens: ItemGrupo[]};
+export type TelaImg = {duracao: number; area?: 'metade' | 'cheia'; paineis: (PainelImg | PainelPrompt | PainelGrupo)[]};
 
 // resposta do promptador (IA Studio, promptadores.9barra7.com): mesmo fundo, fonte e cor do site, ampliada pra ser lida no celular
 const PainelPromptador: React.FC<{p: PainelPrompt; H: number}> = ({p, H}) => {
@@ -210,7 +216,7 @@ const PainelPromptador: React.FC<{p: PainelPrompt; H: number}> = ({p, H}) => {
 					const a = t.marca === undefined ? 0 : interpolate(k, [t.marca, t.marca + 10], [0, 100], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
 					return (
 						<div key={j} style={{fontWeight: 500, fontSize: 36, lineHeight: 1.42}}>
-							<span style={{backgroundImage: 'linear-gradient(#B3FF9F, #B3FF9F)', backgroundRepeat: 'no-repeat', backgroundSize: `${a}% 100%`,
+							<span style={{backgroundImage: `linear-gradient(${t.cor ?? '#B3FF9F'}, ${t.cor ?? '#B3FF9F'})`, backgroundRepeat: 'no-repeat', backgroundSize: `${a}% 100%`,
 								boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone', padding: '0 4px'}}>
 								{t.rotulo && <span>{t.rotulo} </span>}{t.texto}
 							</span>
@@ -222,12 +228,14 @@ const PainelPromptador: React.FC<{p: PainelPrompt; H: number}> = ({p, H}) => {
 	);
 };
 
-const ImagemPainel: React.FC<{p: PainelImg; W: number; H: number; fim: number}> = ({p, W, H, fim}) => {
+const ImagemPainel: React.FC<{p: PainelImg; W: number; H: number; fim: number; livre?: boolean}> = ({p, W, H, fim, livre}) => {
 	const k = useCurrentFrame();
-	const topo = 208, baseSeg = H === 1920 ? 1509 : H;          // área segura: nada importante acima de y 208 (e abaixo de 1509 na cheia)
+	// área segura: nada importante acima de y 208 (e abaixo de 1509 na cheia); numa caixa de grupo, a caixa já é a área
+	const topo = livre ? 0 : 208, baseSeg = livre ? H : H === 1920 ? 1509 : H;
 	let s0: number, ox: number, oy: number;
 	if (p.ajuste === 'contem') {
-		s0 = Math.min(W / p.w, (baseSeg - topo) / p.h); ox = (W - p.w * s0) / 2; oy = topo + (baseSeg - topo - p.h * s0) / 2;
+		const mg = p.cartao ? 48 : 0;
+		s0 = Math.min((W - 2 * mg) / p.w, (baseSeg - topo - 2 * mg) / p.h); ox = (W - p.w * s0) / 2; oy = topo + (baseSeg - topo - p.h * s0) / 2;
 	} else {
 		s0 = Math.max(W / p.w, H / p.h);
 		const [fx, fy] = p.foco ?? [p.w / 2, p.h / 2];
@@ -240,14 +248,14 @@ const ImagemPainel: React.FC<{p: PainelImg; W: number; H: number; fim: number}> 
 	const s = s0 * z; const tx = sx - fx * s, ty = sy - fy * s;
 	return (
 		<div style={{position: 'absolute', left: 0, top: 0, width: p.w, height: p.h, transformOrigin: '0 0', transform: `translate(${tx}px, ${ty}px) scale(${s})`}}>
-			<Img src={staticFile(p.src)} style={{width: p.w, height: p.h, display: 'block'}} />
+			<Img src={staticFile(p.src)} style={{width: p.w, height: p.h, display: 'block', ...(p.cartao ? {borderRadius: 26 / s, boxShadow: `0 ${18 / s}px ${48 / s}px rgba(0,0,0,.55)`, outline: `${1 / s}px solid rgba(255,255,255,.10)`} : {})}} />
 			{(p.escurece ?? []).map((e, j) => (
 				<div key={`e${j}`} style={{position: 'absolute', left: e.x, top: e.y, width: e.w, height: e.h, background: '#000',
 					opacity: interpolate(k, [e.quadro, e.quadro + 8], [0, 0.72], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}} />
 			))}
 			{(p.marcas ?? []).map((m, j) => (
 				<Sequence key={j} from={m.quadro} layout="none">
-					<Contorno m={{quadro: 0, img: 0, cx: m.cx, cy: m.cy, rx: m.rx, ry: m.ry}} w={p.w} h={p.h} s={s} />
+					<Contorno m={{quadro: 0, img: 0, cx: m.cx, cy: m.cy, rx: m.rx, ry: m.ry}} w={p.w} h={p.h} s={s} cor={p.contorno} />
 					<Audio src={staticFile('kit/sfx/clique.wav')} volume={0.5} />
 				</Sequence>
 			))}
@@ -258,11 +266,24 @@ const ImagemPainel: React.FC<{p: PainelImg; W: number; H: number; fim: number}> 
 	);
 };
 
+const Grupo: React.FC<{p: PainelGrupo; fim: number}> = ({p, fim}) => {
+	const k = useCurrentFrame();
+	return <>{p.itens.map((it, j) => {
+		const [x, y, w, h] = it.caixa;
+		const a = it.entra === undefined ? 1 : interpolate(k, [it.entra, it.entra + 8], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
+		const cartaoCaixa = it.cartao && it.ajuste !== 'contem';   // imagem que cobre a caixa: o cartão é a própria caixa
+		return <div key={j} style={{position: 'absolute', left: x, top: y, width: w, height: h, overflow: 'hidden', opacity: a, transform: `translateY(${(1 - a) * 60}px)`,
+			...(cartaoCaixa ? {borderRadius: 26, boxShadow: '0 18px 48px rgba(0,0,0,.55)', outline: '1px solid rgba(255,255,255,.10)'} : {})}}>
+			<ImagemPainel p={cartaoCaixa ? {...it, cartao: false} : it} W={w} H={h} fim={fim} livre />
+		</div>;
+	})}</>;
+};
+
 export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duracao}) => {
 	const k = useCurrentFrame();
 	const W = 1080, H = area === 'cheia' ? 1920 : 960;
 	const ease = {extrapolateLeft: 'clamp' as const, extrapolateRight: 'clamp' as const, easing: Easing.inOut(Easing.cubic)};
-	const dur = (p?: PainelImg | PainelPrompt) => (!p ? 0 : p.entrada === 'cortina' ? 20 : p.entrada === 'corte' ? 0 : 8);
+	const dur = (p?: PainelImg | PainelPrompt | PainelGrupo) => (!p ? 0 : p.entrada === 'cortina' ? 20 : p.entrada === 'corte' ? 0 : 8);
 	return (
 		<AbsoluteFill>
 			<div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, overflow: 'hidden', background: '#000'}}>
@@ -276,7 +297,7 @@ export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duraca
 					if (prox && (prox.entrada ?? 'empurra') === 'empurra' && k >= prox.quadro)
 						estilo.transform = `translateX(${-interpolate(k, [prox.quadro, prox.quadro + 8], [0, 1], ease) * W}px)`;
 					return <React.Fragment key={i}>
-						<div style={{...estilo, zIndex: i}}>{'tipo' in p ? <PainelPromptador p={p} H={H} /> : <ImagemPainel p={p} W={W} H={H} fim={prox ? prox.quadro + dur(prox) : duracao} />}</div>
+						<div style={{...estilo, zIndex: i}}>{'tipo' in p ? (p.tipo === 'grupo' ? <Grupo p={p} fim={prox ? prox.quadro + dur(prox) : duracao} /> : <PainelPromptador p={p} H={H} />) : <ImagemPainel p={p} W={W} H={H} fim={prox ? prox.quadro + dur(prox) : duracao} />}</div>
 						{i > 0 && e === 'cortina' && k < p.quadro + 20 && <div style={{position: 'absolute', top: 0, bottom: 0, width: 6, marginLeft: -3, background: '#fff', zIndex: 99,
 							left: `${interpolate(k, [p.quadro, p.quadro + 20], [0, 100], ease)}%`}} />}
 					</React.Fragment>;

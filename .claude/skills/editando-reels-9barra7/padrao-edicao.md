@@ -22,10 +22,11 @@ Modelo da família Bastidor: reel 06 (29.09), aprovado em 26/09. Final em `Produ
 | Marcação | contorno branco em volta do que a fala aponta, nunca preenchido, sombra escura fina, desenhado em 8 quadros, preso na palavra (±3 quadros). Um clique por marcação |
 | Número na tela | DM Sans Bold ~128 px, branca, sem sombra, letras juntas, no centro da área visível, com pop |
 | Selo | pílula DM Sans bold, caixa alta, ~36 px, texto preto, perto do que aponta. Roxo `#A4A1F3` pro errado/antes ("O TOM MUDOU"), verde `#B3FF9F` pro certo/depois |
-| Tela de software | gravação real da ferramenta (tela do Mac, 2880 px), em recortes aproximados que seguem a fala. Texto longo não se lê no celular: marcar os trechos importantes em verde `#B3FF9F` (marca-texto) e depois mostrá-los ampliados |
+| Tela de software | gravação real da ferramenta (tela do Mac, 2880 px), em recortes aproximados que seguem a fala. Texto longo não se lê no celular: marcar os trechos importantes em verde `#B3FF9F` (marca-texto) e depois mostrá-los ampliados. O que fica de fora ou deve ser ignorado vai em vermelho `#FF9F9F` (reel 01) |
 | Planta | linha branca sobre preto (inverter a planta original), pra marcação branca aparecer |
 | Tipografia | DM Sans em tudo |
-| Cores | base preto e branco. Verde e roxo só em marca-texto e selo |
+| Cores | base preto e branco. Verde, vermelho e roxo só em marca-texto e selo |
+| Material da Marilia | entra como veio: nunca inverter a cor, recolorir nem cobrir parte da imagem sem pedido. Planta, print e imagem gerada entram como cartão (margem, cantos de 26 px, sombra), e o contorno é sempre branco (o padrão, também sobre planta clara). Quando a fala cita a planta e a imagem juntas, as duas aparecem juntas (painel `grupo`) |
 | Transições | corte seco. Na tela dividida, a imagem seguinte entra empurrando (8 quadros) |
 | Efeitos sonoros | só os do `kit/sfx/`, com o volume do `palmier.py`. Cada efeito nasce de algo que acontece na tela (troca grande de imagem, marcação, número, corte da virada), nunca de uma posição fixa. A lista de cada reel fica no `edicao.json` ("sfx"), dentro do que a receita da família permite. Nunca dois a menos de 3 s, nada por cima de palavra que precisa ser entendida |
 | Cama sonora | uma trilha do banco (`kit/trilha/`, abaixo), tratada igual em todas: abaixa sozinha na fala (~16-18 dB abaixo da voz), sobe nas pausas e no fechamento, -3 dB em 1-3,5 kHz (`cama.py`). Como ela marca a virada vem da receita da família: abre (abafada até a virada), silêncio (some 0,6 s antes e volta cheia) ou plana |
@@ -53,7 +54,7 @@ Dentro de uma tela, a imagem seguinte entra empurrando (8 quadros), em cortina o
 | Família | Abre em | Formatos | Virada | Efeitos | Destaque |
 |---|---|---|---|---|---|
 | Resultado antes da explicação | o resultado em tela cheia, gancho sobre a imagem, voz em off | cheia, cortina, dividida | silêncio | impacto no 0:00, whoosh na primeira troca grande de imagem | sim, onde a ideia cai |
-| Erro custoso | a Marilia (P1 empurra), gancho | zoom, cheia, dividida | abre + subida | impacto, clique nas marcações, subida | a palavra do erro, pode ser no meio |
+| Erro custoso | a Marilia (P1 empurra), gancho | zoom, cheia, dividida | abre | impacto, clique nas marcações, subida com o hit na entrada do destaque (na virada soou solta, reel 01) | a palavra do erro, pode ser no meio |
 | Contradição de mercado | a Marilia, gancho | dividida, número | plana, marcada pelo corte pra ÊNFASE | impacto, pop no número | a tese, com pop |
 | Gravação de tela | a Marilia com o gancho, e logo a tela | janela, cheia | plana | impacto, clique nas marcações, sem whoosh | não (usa selo) |
 | Peça livre (analogia) | a Marilia, gancho | apoio, cheia | silêncio | impacto, whoosh na entrada do apoio | a frase de fechamento |
