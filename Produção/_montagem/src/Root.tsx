@@ -1,5 +1,5 @@
 import {Composition} from 'remotion';
-import {TelaComparacao, TelaPlaceholder, cena3Reel06, materiaisReel06} from './Telas';
+import {TelaComparacao, TelaImagens, TelaPlaceholder, cena3Reel06, materiaisReel06} from './Telas';
 
 export const Root: React.FC = () => (
 	<>
@@ -10,6 +10,9 @@ export const Root: React.FC = () => (
 	{/* provisória: props e duração vêm do --props (ver Telas.tsx, Placeholder) */}
 	<Composition id="Placeholder" component={TelaPlaceholder as unknown as React.FC<Record<string, unknown>>} width={1080} height={1920} fps={30}
 		durationInFrames={90} defaultProps={{duracao: 90, paineis: [{quadro: 0, titulo: 'Render do quarto', arquivo: 'render-1.jpg'}]} as unknown as Record<string, unknown>}
+		calculateMetadata={({props}) => ({durationInFrames: (props as {duracao: number}).duracao})} />	{/* telas com imagens reais: props e duração vêm do --props (ver Telas.tsx, TelaImagens) */}
+	<Composition id="Imagens" component={TelaImagens as unknown as React.FC<Record<string, unknown>>} width={1080} height={1920} fps={30}
+		durationInFrames={90} defaultProps={{duracao: 90, paineis: []} as unknown as Record<string, unknown>}
 		calculateMetadata={({props}) => ({durationInFrames: (props as {duracao: number}).duracao})} />
 	</>
 );

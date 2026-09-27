@@ -183,3 +183,105 @@ export const TelaPlaceholder: React.FC<Placeholder> = ({paineis, area = 'metade'
 		</AbsoluteFill>
 	);
 };
+
+// Tela com imagens reais, em qualquer formato do cardápio (padrao-edicao.md): metade de cima (dividida) ou tela inteira
+// (cheia, janela, cortina, zoom). Cada painel é uma imagem: cobre a área (com foco) ou cabe na área segura (planta);
+// zoom lento em direção ao foco; contornos e áreas escurecidas presos no quadro da palavra. Coordenadas em pixels da imagem.
+export type MarcaImg = {quadro: number; cx: number; cy: number; rx: number; ry: number};
+export type Escurece = {quadro: number; x: number; y: number; w: number; h: number};
+export type PainelImg = {src: string; w: number; h: number; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte';
+	ajuste?: 'cobre' | 'contem'; foco?: [number, number]; zoom?: [number, number]; marcas?: MarcaImg[]; escurece?: Escurece[]; rotulos?: Rotulo[]};
+export type TrechoPrompt = {texto: string; rotulo?: string; marca?: number};   // marca: quadro em que o marca-texto verde passa
+export type PainelPrompt = {tipo: 'promptador'; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte'; titulo?: string; trechos: TrechoPrompt[]};
+export type TelaImg = {duracao: number; area?: 'metade' | 'cheia'; paineis: (PainelImg | PainelPrompt)[]};
+
+// resposta do promptador (IA Studio, promptadores.9barra7.com): mesmo fundo, fonte e cor do site, ampliada pra ser lida no celular
+const PainelPromptador: React.FC<{p: PainelPrompt; H: number}> = ({p, H}) => {
+	const k = useCurrentFrame();
+	return (
+		<div style={{position: 'absolute', inset: 0, background: '#f6f6f4', fontFamily: 'DM Sans', color: '#111'}}>
+			<div style={{position: 'absolute', left: 56, right: 56, top: 236, bottom: H === 1920 ? 420 : 24, display: 'flex', flexDirection: 'column', gap: 22}}>
+				<div style={{display: 'flex', alignItems: 'center', gap: 16}}>
+					<span style={{fontWeight: 700, fontSize: 24, letterSpacing: '0.1em', color: '#8a8a86'}}>PROMPTADOR</span>
+					<span style={{fontWeight: 500, fontSize: 22, color: '#6b6b67', border: '1.5px solid #d9d9d4', borderRadius: 999, padding: '4px 16px'}}>Copiar</span>
+				</div>
+				{p.titulo && <div style={{fontWeight: 700, fontSize: 40}}>{p.titulo}</div>}
+				{p.trechos.map((t, j) => {
+					const a = t.marca === undefined ? 0 : interpolate(k, [t.marca, t.marca + 10], [0, 100], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
+					return (
+						<div key={j} style={{fontWeight: 500, fontSize: 36, lineHeight: 1.42}}>
+							<span style={{backgroundImage: 'linear-gradient(#B3FF9F, #B3FF9F)', backgroundRepeat: 'no-repeat', backgroundSize: `${a}% 100%`,
+								boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone', padding: '0 4px'}}>
+								{t.rotulo && <span>{t.rotulo} </span>}{t.texto}
+							</span>
+						</div>
+					);
+				})}
+			</div>
+		</div>
+	);
+};
+
+const ImagemPainel: React.FC<{p: PainelImg; W: number; H: number; fim: number}> = ({p, W, H, fim}) => {
+	const k = useCurrentFrame();
+	const topo = 208, baseSeg = H === 1920 ? 1509 : H;          // área segura: nada importante acima de y 208 (e abaixo de 1509 na cheia)
+	let s0: number, ox: number, oy: number;
+	if (p.ajuste === 'contem') {
+		s0 = Math.min(W / p.w, (baseSeg - topo) / p.h); ox = (W - p.w * s0) / 2; oy = topo + (baseSeg - topo - p.h * s0) / 2;
+	} else {
+		s0 = Math.max(W / p.w, H / p.h);
+		const [fx, fy] = p.foco ?? [p.w / 2, p.h / 2];
+		ox = Math.min(0, Math.max(W - p.w * s0, W / 2 - fx * s0)); oy = Math.min(0, Math.max(H - p.h * s0, H / 2 - fy * s0));
+	}
+	const [z0, z1] = p.zoom ?? [1, 1];
+	const z = interpolate(k, [p.quadro, fim], [z0, z1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.inOut(Easing.quad)});
+	const [fx, fy] = p.foco ?? [p.w / 2, p.h / 2];
+	const sx = ox + fx * s0, sy = oy + fy * s0;                  // o foco fica parado na tela durante o zoom
+	const s = s0 * z; const tx = sx - fx * s, ty = sy - fy * s;
+	return (
+		<div style={{position: 'absolute', left: 0, top: 0, width: p.w, height: p.h, transformOrigin: '0 0', transform: `translate(${tx}px, ${ty}px) scale(${s})`}}>
+			<Img src={staticFile(p.src)} style={{width: p.w, height: p.h, display: 'block'}} />
+			{(p.escurece ?? []).map((e, j) => (
+				<div key={`e${j}`} style={{position: 'absolute', left: e.x, top: e.y, width: e.w, height: e.h, background: '#000',
+					opacity: interpolate(k, [e.quadro, e.quadro + 8], [0, 0.72], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}} />
+			))}
+			{(p.marcas ?? []).map((m, j) => (
+				<Sequence key={j} from={m.quadro} layout="none">
+					<Contorno m={{quadro: 0, img: 0, cx: m.cx, cy: m.cy, rx: m.rx, ry: m.ry}} w={p.w} h={p.h} s={s} />
+					<Audio src={staticFile('kit/sfx/clique.wav')} volume={0.5} />
+				</Sequence>
+			))}
+			{(p.rotulos ?? []).map((r, j) => (
+				<Sequence key={`r${j}`} from={r.quadro} layout="none"><Selo r={r} s={s} /></Sequence>
+			))}
+		</div>
+	);
+};
+
+export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duracao}) => {
+	const k = useCurrentFrame();
+	const W = 1080, H = area === 'cheia' ? 1920 : 960;
+	const ease = {extrapolateLeft: 'clamp' as const, extrapolateRight: 'clamp' as const, easing: Easing.inOut(Easing.cubic)};
+	const dur = (p?: PainelImg | PainelPrompt) => (!p ? 0 : p.entrada === 'cortina' ? 20 : p.entrada === 'corte' ? 0 : 8);
+	return (
+		<AbsoluteFill>
+			<div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, overflow: 'hidden', background: '#000'}}>
+				{paineis.map((p, i) => {
+					const prox = paineis[i + 1];
+					if (k < p.quadro || (prox && k >= prox.quadro + dur(prox))) return null;
+					const e = p.entrada ?? 'empurra';
+					const estilo: React.CSSProperties = {position: 'absolute', inset: 0, overflow: 'hidden'};
+					if (i > 0 && e === 'empurra') estilo.transform = `translateX(${(1 - interpolate(k, [p.quadro, p.quadro + 8], [0, 1], ease)) * W}px)`;
+					if (i > 0 && e === 'cortina') estilo.clipPath = `inset(0 ${100 - interpolate(k, [p.quadro, p.quadro + 20], [0, 100], ease)}% 0 0)`;
+					if (prox && (prox.entrada ?? 'empurra') === 'empurra' && k >= prox.quadro)
+						estilo.transform = `translateX(${-interpolate(k, [prox.quadro, prox.quadro + 8], [0, 1], ease) * W}px)`;
+					return <React.Fragment key={i}>
+						<div style={{...estilo, zIndex: i}}>{'tipo' in p ? <PainelPromptador p={p} H={H} /> : <ImagemPainel p={p} W={W} H={H} fim={prox ? prox.quadro + dur(prox) : duracao} />}</div>
+						{i > 0 && e === 'cortina' && k < p.quadro + 20 && <div style={{position: 'absolute', top: 0, bottom: 0, width: 6, marginLeft: -3, background: '#fff', zIndex: 99,
+							left: `${interpolate(k, [p.quadro, p.quadro + 20], [0, 100], ease)}%`}} />}
+					</React.Fragment>;
+				})}
+			</div>
+		</AbsoluteFill>
+	);
+};

@@ -3,7 +3,7 @@
 
 Faixas, de cima pra baixo (padrao-edicao.md):
   Destaque · Texto (gancho e legendas) · Janela (a Marilia no formato janela) · Telas (ProRes 4444 com transparência, e o fechamento) · Câmera
-  Voz · Cliques (o som que vem dentro das telas) · Efeitos · Cama
+  Voz (um pedaço por trecho, do take limpo, ligado à câmera) · Cliques (o som que vem dentro das telas) · Efeitos · Cama
 - câmera: a imagem de edição (imagem.py) na escala de cada plano (P1 1, P2 1,10, P3 1,18, ÊNFASE 1,30; empurra até +20%);
   embaixo de uma tela, desce pra metade de baixo (tela dividida: centerY 0,695 ou menos, ver dividida_y; escala 1)
 - fechamento: último quadro congelado (vídeo parado, não PNG) na escala do último plano + a marca (kit/fechamento), 4 s
@@ -167,8 +167,9 @@ def main():
     # câmera: um clipe por trecho, partido onde uma tela começa ou termina
     cam = P.media(os.path.join(ed, 'imagem', 'camera-edicao.mp4'), 'video')
     pedacos_janela = []
+    grupo = {}   # trecho -> linkGroupId: câmera e voz do mesmo trecho andam juntas no Palmier
     for t in m['trechos']:
-        o, n = t['out_f0'], t['n']; base = ESCALA.get(t['plano'].split()[0], 1.0)
+        o, n = t['out_f0'], t['n']; base = ESCALA.get(t['plano'].split()[0], 1.0); g = grupo[t['num']] = uid()
         cortes = sorted({o, o + n} | {x for ab in cobre for x in ab[:2] if o < x < o + n})
         for s0, s1 in zip(cortes, cortes[1:]):
             trim = int(round(t['src_t0'] * FPS)) + (s0 - o)
@@ -181,11 +182,11 @@ def main():
                 pedacos_janela.append((s0, s1, arq))
                 continue
             if layout:
-                P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, cy=div_y)
+                P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, cy=div_y, link=g)
             elif 'empurra' in t['plano']:
-                P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, kf=empurra_kf(base, (s0 - o) / max(n - 1, 1), (s1 - 1 - o) / max(n - 1, 1), s1 - s0))
+                P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, kf=empurra_kf(base, (s0 - o) / max(n - 1, 1), (s1 - 1 - o) / max(n - 1, 1), s1 - s0), link=g)
             else:
-                P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, escala=base)
+                P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, escala=base, link=g)
 
     # janela: um arquivo só por tela (o Palmier some com o quadro inteiro quando um clipe com transparência começa no meio de outro)
     for a_, b_, l in cobre:
@@ -211,7 +212,13 @@ def main():
     P.clipe(f_telas, marca, fala, m['fechamento'])
 
     # voz e cama
-    P.clipe(f_voz, P.media(os.path.join(ed, 'audio', 'montagem-limpa.wav'), 'audio'), 0, m['quadros'])
+    # voz: um pedaço por trecho, apontando pro take limpo inteiro (com sobra antes e depois), ligado à câmera do trecho.
+    # Puxar um corte no Palmier mexe imagem e voz juntas. Fade de 1 quadro nas bordas, como os 30 ms do montagem.wav
+    voz = P.media(os.path.join(ed, m.get('voz', 'audio/D-eq9.wav')), 'audio')
+    if 'limpo' not in voz['name']: print('  AVISO: voz sem a limpeza do falhas_mic.py (rodar audio/falhas_mic.py e o montar.py de novo)')
+    for t in m['trechos']:
+        c = P.clipe(f_voz, voz, t['out_f0'], t['n'], trim=int(round(t['src_t0'] * FPS)), link=grupo[t['num']])
+        c.update(fadeInFrames=1, fadeOutFrames=1)
     P.clipe(f_cama, P.media(os.path.join(ed, 'audio', 'cama.wav'), 'audio'), 0, m['quadros'])
 
     # efeitos

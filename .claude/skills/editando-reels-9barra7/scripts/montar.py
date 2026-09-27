@@ -10,7 +10,7 @@ Legenda (padrao-edicao.md): frase em blocos de até 2 linhas, cada linha com at�
 (centralizada, não entra embaixo dos botões do Instagram); nunca termina linha em palavra fraca; corta primeiro
 na pontuação e, se não couber, no tempo da fala. Nada nos 3 s do gancho nem enquanto o destaque está na tela.
 
-Uso: montar.py "<pasta do reel>" [--audio audio/D-eq9.wav]"""
+Uso: montar.py "<pasta do reel>" [--audio audio/D-limpo.wav]   (padrão: D-limpo, ou D-eq9 se ainda não houver)"""
 import argparse, json, os, re, sys, difflib, unicodedata
 import numpy as np, soundfile as sf
 from PIL import ImageFont
@@ -191,8 +191,12 @@ def achar_destaque(ed, palavras, tl):
 
 
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument('pasta'); ap.add_argument('--audio', default='audio/D-eq9.wav')
+    ap = argparse.ArgumentParser(); ap.add_argument('pasta'); ap.add_argument('--audio')
     a = ap.parse_args(); ed_dir = os.path.join(a.pasta, '4-edicao')
+    if not a.audio:   # o take limpo (falhas_mic.py) é a fonte da voz montada e dos pedaços de voz do Palmier
+        a.audio = 'audio/D-limpo.wav'
+        if not os.path.exists(os.path.join(ed_dir, a.audio)):
+            a.audio = 'audio/D-eq9.wav'; print('  AVISO: sem audio/D-limpo.wav, montando do D-eq9 (rodar audio/falhas_mic.py antes)')
     ed = json.load(open(os.path.join(ed_dir, 'edicao.json'), encoding='utf-8'))
     ilhas = json.load(open(os.path.join(ed_dir, 'ilhas.json'), encoding='utf-8'))['ilhas']
     x, sr = sf.read(os.path.join(ed_dir, a.audio)); assert sr == SR
@@ -209,7 +213,7 @@ def main():
     leg, palavras = legendas(tl, ilhas, gancho_s, destaque)
     virada = next((t['out_f0'] for t in tl if t['num'] == ed.get('virada')), None)
     telas = [dict(t, quadro=next(x['out_f0'] for x in tl if x['num'] == t['trecho'])) for t in ed.get('telas', [])]
-    json.dump(dict(fps=FPS, trechos=tl, legendas=leg, palavras=palavras, gancho=gancho, destaque=destaque, virada=virada, telas=telas,
+    json.dump(dict(fps=FPS, voz=a.audio, trechos=tl, legendas=leg, palavras=palavras, gancho=gancho, destaque=destaque, virada=virada, telas=telas,
                    cama=ed.get('cama'), sfx=ed.get('sfx'),
                    quadros=n_fala + int(FECHAMENTO * FPS), fechamento=int(FECHAMENTO * FPS)),
               open(os.path.join(ed_dir, 'montagem.json'), 'w'), ensure_ascii=False, indent=1)

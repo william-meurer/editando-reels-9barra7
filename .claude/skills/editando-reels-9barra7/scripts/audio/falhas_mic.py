@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Última passada na voz já montada (montagem.wav): repara as falhas do microfone sem fio que sobraram.
+"""Última passada na voz: repara as falhas do microfone sem fio que sobraram.
 1) buracos (o sinal congela ~1-2 ms e pula de volta): LSAR em banda cheia só nas amostras da falha
 2) estalo curto que sobrou (limiar 5 na faixa 9-20 kHz): LSAR só acima de 1,5 kHz
-Não mexe a menos de 20 ms das emendas entre trechos (lá o fade é proposital).
+Roda no take tratado inteiro (D-eq9.wav -> D-limpo.wav), antes do montar.py: é dele que saem a voz montada e os
+pedaços de voz do Palmier, então um corte puxado à mão lá continua limpo. Na voz já montada (--montagem, o jeito
+antigo) não mexe a menos de 20 ms das emendas entre trechos (lá o fade é proposital).
 No reel 06 (26/09): 138 buracos e 78 estalos reparados; estalos detectáveis de 45 para 7.
-Uso: falhas_mic.py "<pasta do reel>"   (lê 4-edicao/audio/montagem.wav, grava montagem-limpa.wav)"""
+Uso: falhas_mic.py "<pasta do reel>"   (lê 4-edicao/audio/D-eq9.wav, grava D-limpo.wav)
+     falhas_mic.py "<pasta do reel>" --montagem   (lê montagem.wav, grava montagem-limpa.wav)"""
 import json, sys, importlib.util as u
 from pathlib import Path
 import numpy as np, soundfile as sf
@@ -32,11 +35,14 @@ def limpar(x, sr, bordas):
 
 if __name__ == '__main__':
     ed = Path(sys.argv[1]) / '4-edicao'
-    ent = ed / 'audio' / 'montagem.wav'
+    if '--montagem' in sys.argv:
+        ent, sai = ed / 'audio' / 'montagem.wav', ed / 'audio' / 'montagem-limpa.wav'
+        m = json.load(open(ed / 'montagem.json'))
+        bordas = [t['out_f0'] / m['fps'] for t in m['trechos']] + [sum(t['n'] for t in m['trechos']) / m['fps']]
+    else:
+        ent, sai, bordas = ed / 'audio' / 'D-eq9.wav', ed / 'audio' / 'D-limpo.wav', []
     x, sr = sf.read(ent)
-    m = json.load(open(ed / 'montagem.json'))
-    bordas = [t['out_f0'] / m['fps'] for t in m['trechos']] + [sum(t['n'] for t in m['trechos']) / m['fps']]
     y, nb, ne = limpar(x, sr, bordas)
-    sf.write(ed / 'audio' / 'montagem-limpa.wav', y, sr, subtype=sf.info(ent).subtype)
+    sf.write(sai, y, sr, subtype=sf.info(ent).subtype)
     print(f'falhas_mic: {nb} buracos e {ne} estalos reparados; estalos que sobram: '
           f'{len(estalos_hf.detectar(y, sr, 6))} (antes {len(estalos_hf.detectar(x, sr, 6))})')
