@@ -307,44 +307,72 @@ export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duraca
 	);
 };
 
-// Gancho digitado (padrao-edicao.md, "Texto do gancho"): o texto já no lugar final, centralizado, e as letras aparecem uma a uma
-// com cursor, cada uma com o som de uma tecla (kit/sfx/teclado, sintetizado). O pop-in e o typewriter do Palmier não servem:
-// o primeiro sai como bloco na exportação, o segundo alinha à esquerda e demora a tela toda pra terminar.
-export type Gancho = {duracao: number; linhas: string[]; inicio?: number; ritmo?: number};
+// Gancho (padrao-edicao.md, "Texto do gancho"), em dois estilos (padrão: palavras, escolhido no reel 01):
+// - digitado: letra por letra num ritmo constante; cada letra entra com fade, desfoque e uma subida curta, e a linha
+//   continua centralizada enquanto cresce (a largura desliza, não pula); cursor arredondado que pulsa no fim.
+//   Cada letra com o som de uma tecla (kit/sfx/teclado)
+// - palavras: o texto já no lugar, cada palavra entra com fade, desfoque e subida, e uma tecla por palavra
+// O pop-in e o typewriter do Palmier não servem: o primeiro sai como bloco na exportação, o segundo alinha à esquerda.
+export type Gancho = {duracao: number; linhas: string[]; estilo?: 'digitado' | 'palavras'; inicio?: number; ritmo?: number};
 const TECLAS = [1, 2, 3, 4, 5, 6, 7, 8].map((i) => `kit/sfx/teclado/tecla-0${i}.wav`);
-const tempos = (linhas: string[], inicio: number, ritmo: number) => {
-	// um quadro por letra, com variação fixa (2 a 3 quadros) pra soar como gente digitando; espaço demora um pouco mais
-	const out: number[] = []; let q = inicio; let semente = 7;
-	for (const l of linhas) for (const ch of l) {
-		out.push(q); semente = (semente * 9301 + 49297) % 233280;
-		q += ritmo + (semente / 233280 > 0.5 ? 1 : 0) + (ch === ' ' ? 1 : 0);
-	}
-	return out;
+const FONTE_G = {fontFamily: 'DM Sans', fontWeight: 700, fontSize: 128, letterSpacing: -8.9} as const;
+const PASSO = 129;   // entre linhas, igual ao gancho do Palmier (72 pt, entrelinha -22)
+let ctxMedida: CanvasRenderingContext2D | null = null;
+const largura = (t: string) => {
+	if (!ctxMedida) ctxMedida = document.createElement('canvas').getContext('2d');
+	ctxMedida!.font = "700 128px 'DM Sans'";
+	return t ? ctxMedida!.measureText(t).width + FONTE_G.letterSpacing * t.length : 0;
 };
-export const TelaGancho: React.FC<Gancho> = ({linhas, inicio = 2, ritmo = 2}) => {
+const entra = (k: number, q: number, dur: number) => interpolate(k, [q, q + dur], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
+
+export const TelaGancho: React.FC<Gancho> = ({linhas, estilo = 'palavras', inicio = 2, ritmo = 2}) => {
 	const k = useCurrentFrame();
-	const t = tempos(linhas, inicio, ritmo);
-	const n = t.filter((q) => q <= k).length;                     // letras já digitadas
-	const fim = t[t.length - 1];
-	const pisca = k > fim + 4 && Math.floor((k - fim) / 14) % 2 === 1;
-	let i = 0;
+	const y0 = 960 - ((linhas.length - 1) * PASSO) / 2;          // centro de cada linha
+	if (estilo === 'palavras') {
+		const palavras = linhas.map((l) => l.split(' '));
+		let w = 0; const tq: number[][] = palavras.map((ps) => ps.map(() => inicio + 5 * w++));
+		return (
+			<AbsoluteFill>
+				{palavras.map((ps, li) => (
+					<div key={li} style={{...FONTE_G, color: '#fff', position: 'absolute', left: 0, right: 0, top: y0 + li * PASSO - 80, height: 160, lineHeight: '160px', textAlign: 'center', whiteSpace: 'pre'}}>
+						{ps.map((p, pi) => { const a = entra(k, tq[li][pi], 7);
+							return <span key={pi} style={{display: 'inline-block', opacity: a, filter: `blur(${(1 - a) * 10}px)`, transform: `translateY(${(1 - a) * 22}px) scale(${0.97 + 0.03 * a})`}}>{p}{pi < ps.length - 1 ? ' ' : ''}</span>; })}
+					</div>
+				))}
+				{tq.flat().map((q, j) => <Sequence key={j} from={q} layout="none"><Audio src={staticFile(TECLAS[j % TECLAS.length])} volume={0.5} /></Sequence>)}
+			</AbsoluteFill>
+		);
+	}
+	// digitado: quadro de cada letra, contínuo entre as linhas
+	const t: number[][] = []; let q = inicio;
+	for (const l of linhas) { t.push([...l].map(() => { const v = q; q += ritmo; return v; })); }
+	const fim = q - ritmo;
+	const cursorLinha = (() => { let r = 0; t.forEach((ts, li) => { if (ts[0] <= k) r = li; }); return r; })();
+	const pulso = k <= fim + 6 ? 1 : 0.5 + 0.5 * Math.cos(((k - fim - 6) / 30) * 2 * Math.PI);
+	let j = 0;
 	return (
-		<AbsoluteFill style={{alignItems: 'center', justifyContent: 'center'}}>
-			<div style={{fontFamily: 'DM Sans', fontWeight: 700, fontSize: 128, lineHeight: '129px', letterSpacing: -8.9, color: '#fff', textAlign: 'center'}}>
-				{linhas.map((l, li) => (
-					<div key={li} style={{whiteSpace: 'pre'}}>
-						{[...l].map((ch, ci) => {
-							const j = i++; const vis = j < n;
-							return <span key={ci} style={{position: 'relative', visibility: vis ? 'visible' : 'hidden'}}>{ch}
-								{j === n - 1 && !pisca && <span style={{position: 'absolute', visibility: 'visible', right: -16, top: 18, width: 8, height: 94, background: '#fff'}} />}
+		<AbsoluteFill>
+			{linhas.map((l, li) => {
+				const ch = [...l]; const ts = t[li];
+				const n = ts.filter((v) => v <= k).length;
+				if (n === 0) return null;
+				// largura visível deslizando: da largura com n-1 letras pra com n, nos 3 quadros depois da letra
+				const a = entra(k, ts[n - 1], 3);
+				const wv = largura(ch.slice(0, n - 1).join('')) * (1 - a) + largura(ch.slice(0, n).join('')) * a;
+				return (
+					<div key={li} style={{...FONTE_G, color: '#fff', position: 'absolute', top: y0 + li * PASSO - 80, height: 160, lineHeight: '160px', left: (1080 - wv) / 2, whiteSpace: 'pre'}}>
+						{ch.map((c, ci) => {
+							const b = ci < n ? entra(k, ts[ci], 4) : 0; j++;
+							return <span key={ci} style={{display: 'inline-block', position: 'relative', opacity: b, filter: `blur(${(1 - b) * 6}px)`, transform: `translateY(${(1 - b) * 10}px)`}}>{c === ' ' ? '\u00a0' : c}
+								{ci === n - 1 && li === cursorLinha && <span style={{position: 'absolute', right: -18, top: 34, width: 7, height: 96, borderRadius: 4, background: '#fff', opacity: pulso / Math.max(b, 0.01) * b}} />}
 							</span>;
 						})}
 					</div>
-				))}
-			</div>
-			{t.map((q, j) => (
-				<Sequence key={j} from={q} layout="none">
-					<Audio src={staticFile([...linhas.join('')][j] === ' ' ? 'kit/sfx/teclado/espaco.wav' : TECLAS[j % TECLAS.length])} volume={0.55} />
+				);
+			})}
+			{t.flat().map((v, i) => (
+				<Sequence key={i} from={v} layout="none">
+					<Audio src={staticFile(linhas.join('')[i] === ' ' ? 'kit/sfx/teclado/espaco.wav' : TECLAS[i % TECLAS.length])} volume={0.5} />
 				</Sequence>
 			))}
 		</AbsoluteFill>
