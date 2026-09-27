@@ -192,14 +192,19 @@ export type Escurece = {quadro: number; x: number; y: number; w: number; h: numb
 export type PainelImg = {src: string; w: number; h: number; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte';
 	ajuste?: 'cobre' | 'contem'; foco?: [number, number]; zoom?: [number, number]; marcas?: MarcaImg[]; escurece?: Escurece[]; rotulos?: Rotulo[];
 	cartao?: boolean;      // a imagem como um cartão: margem, cantos arredondados e sombra (planta, print), em vez de encostar nas bordas
-	contorno?: string};    // cor do contorno: branco (padrão, sobre imagem escura) ou preto sobre planta clara
+	contorno?: string;     // cor do contorno: branco (padrão, sobre imagem escura) ou preto sobre planta clara
+	desenha?: Desenho};
+// traço da própria Marilia se desenhando sobre a versão limpa da imagem (reel 02: a seta na planta). src = PNG do mesmo
+// tamanho com transparência fora do traço; ele aparece de y "de" até y "ate" (px da imagem) em "dur" quadros, com um clique
+export type Desenho = {src: string; quadro: number; dur: number; de: number; ate: number};
 export type TrechoPrompt = {texto: string; rotulo?: string; marca?: number; cor?: string};   // marca: quadro em que o marca-texto passa (verde, ou cor: vermelho pro que fica de fora)
 export type PainelPrompt = {tipo: 'promptador'; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte'; titulo?: string; trechos: TrechoPrompt[]};
 // várias imagens juntas na mesma tela (ex.: a planta em cima e a imagem gerada embaixo), cada uma na sua caixa [x, y, w, h];
 // entra: quadro em que a imagem sobe pra caixa (sem ele, já está lá quando o painel entra)
 export type ItemGrupo = PainelImg & {caixa: [number, number, number, number]; entra?: number};
 export type PainelGrupo = {tipo: 'grupo'; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte'; itens: ItemGrupo[]};
-export type TelaImg = {duracao: number; area?: 'metade' | 'cheia'; paineis: (PainelImg | PainelPrompt | PainelGrupo)[]};
+// fundo: preto (padrão) ou transparente, pros cartões flutuarem sobre a câmera (reel 02, pedido do William)
+export type TelaImg = {duracao: number; area?: 'metade' | 'cheia'; fundo?: 'preto' | 'transparente'; paineis: (PainelImg | PainelPrompt | PainelGrupo)[]};
 
 // resposta do promptador (IA Studio, promptadores.9barra7.com): mesmo fundo, fonte e cor do site, ampliada pra ser lida no celular
 const PainelPromptador: React.FC<{p: PainelPrompt; H: number}> = ({p, H}) => {
@@ -249,6 +254,17 @@ const ImagemPainel: React.FC<{p: PainelImg; W: number; H: number; fim: number; l
 	return (
 		<div style={{position: 'absolute', left: 0, top: 0, width: p.w, height: p.h, transformOrigin: '0 0', transform: `translate(${tx}px, ${ty}px) scale(${s})`}}>
 			<Img src={staticFile(p.src)} style={{width: p.w, height: p.h, display: 'block', ...(p.cartao ? {borderRadius: 26 / s, boxShadow: `0 ${18 / s}px ${48 / s}px rgba(0,0,0,.55)`, outline: `${1 / s}px solid rgba(255,255,255,.10)`} : {})}} />
+			{p.desenha && k >= p.desenha.quadro && (() => {
+				const d = p.desenha!;
+				const y = interpolate(k, [d.quadro, d.quadro + d.dur], [d.de, d.ate], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.inOut(Easing.cubic)});
+				const a = d.de > d.ate ? 'to bottom' : 'to top';
+				const borda = d.de > d.ate ? y : p.h - y;
+				const mask = `linear-gradient(${a}, transparent ${borda - 3}px, #000 ${borda + 3}px)`;
+				return <>
+					<Img src={staticFile(d.src)} style={{position: 'absolute', left: 0, top: 0, width: p.w, height: p.h, WebkitMaskImage: mask, maskImage: mask, ...(p.cartao ? {borderRadius: 26 / s} : {})}} />
+					<Sequence from={d.quadro} layout="none"><Audio src={staticFile('kit/sfx/clique.wav')} volume={0.5} /></Sequence>
+				</>;
+			})()}
 			{(p.escurece ?? []).map((e, j) => (
 				<div key={`e${j}`} style={{position: 'absolute', left: e.x, top: e.y, width: e.w, height: e.h, background: '#000',
 					opacity: interpolate(k, [e.quadro, e.quadro + 8], [0, 0.72], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}} />
@@ -279,14 +295,14 @@ const Grupo: React.FC<{p: PainelGrupo; fim: number}> = ({p, fim}) => {
 	})}</>;
 };
 
-export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duracao}) => {
+export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duracao, fundo = 'preto'}) => {
 	const k = useCurrentFrame();
 	const W = 1080, H = area === 'cheia' ? 1920 : 960;
 	const ease = {extrapolateLeft: 'clamp' as const, extrapolateRight: 'clamp' as const, easing: Easing.inOut(Easing.cubic)};
 	const dur = (p?: PainelImg | PainelPrompt | PainelGrupo) => (!p ? 0 : p.entrada === 'cortina' ? 20 : p.entrada === 'corte' ? 0 : 8);
 	return (
 		<AbsoluteFill>
-			<div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, overflow: 'hidden', background: '#000'}}>
+			<div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, overflow: 'hidden', background: fundo === 'preto' ? '#000' : 'transparent'}}>
 				{paineis.map((p, i) => {
 					const prox = paineis[i + 1];
 					if (k < p.quadro || (prox && k >= prox.quadro + dur(prox))) return null;
@@ -313,7 +329,8 @@ export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duraca
 //   Cada letra com o som de uma tecla (kit/sfx/teclado)
 // - palavras: o texto já no lugar, cada palavra entra com fade, desfoque e subida, e uma tecla por palavra
 // O pop-in e o typewriter do Palmier não servem: o primeiro sai como bloco na exportação, o segundo alinha à esquerda.
-export type Gancho = {duracao: number; linhas: string[]; estilo?: 'digitado' | 'palavras'; inicio?: number; ritmo?: number};
+// veu: escurece o que está embaixo enquanto o gancho está na tela (0-1), e some nos últimos 8 quadros. Pra gancho sobre imagem clara (reel 02)
+export type Gancho = {duracao: number; linhas: string[]; estilo?: 'digitado' | 'palavras'; inicio?: number; ritmo?: number; veu?: number};
 const TECLAS = [1, 2, 3, 4, 5, 6, 7, 8].map((i) => `kit/sfx/teclado/tecla-0${i}.wav`);
 const FONTE_G = {fontFamily: 'DM Sans', fontWeight: 700, fontSize: 128, letterSpacing: -8.9} as const;
 const PASSO = 129;   // entre linhas, igual ao gancho do Palmier (72 pt, entrelinha -22)
@@ -325,14 +342,16 @@ const largura = (t: string) => {
 };
 const entra = (k: number, q: number, dur: number) => interpolate(k, [q, q + dur], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
 
-export const TelaGancho: React.FC<Gancho> = ({linhas, estilo = 'palavras', inicio = 2, ritmo = 2}) => {
+export const TelaGancho: React.FC<Gancho> = ({linhas, estilo = 'palavras', inicio = 2, ritmo = 2, veu = 0, duracao}) => {
 	const k = useCurrentFrame();
+	const fundo = veu > 0 && <AbsoluteFill style={{background: '#000', opacity: veu * interpolate(k, [duracao - 8, duracao], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}} />;
 	const y0 = 960 - ((linhas.length - 1) * PASSO) / 2;          // centro de cada linha
 	if (estilo === 'palavras') {
 		const palavras = linhas.map((l) => l.split(' '));
 		let w = 0; const tq: number[][] = palavras.map((ps) => ps.map(() => inicio + 5 * w++));
 		return (
 			<AbsoluteFill>
+				{fundo}
 				{palavras.map((ps, li) => (
 					<div key={li} style={{...FONTE_G, color: '#fff', position: 'absolute', left: 0, right: 0, top: y0 + li * PASSO - 80, height: 160, lineHeight: '160px', textAlign: 'center', whiteSpace: 'pre'}}>
 						{ps.map((p, pi) => { const a = entra(k, tq[li][pi], 7);

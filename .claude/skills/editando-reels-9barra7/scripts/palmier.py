@@ -7,7 +7,9 @@ Faixas, de cima pra baixo (padrao-edicao.md):
 - câmera: a imagem de edição (imagem.py) na escala de cada plano (P1 1, P2 1,10, P3 1,18, ÊNFASE 1,30; empurra até +20%);
   embaixo de uma tela, desce pra metade de baixo (tela dividida: centerY 0,695 ou menos, ver dividida_y; escala 1)
 - fechamento: último quadro congelado (vídeo parado, não PNG) na escala do último plano + a marca (kit/fechamento), 4 s
-- telas: layout do edicao.json (dividida: câmera desce; cheia: sem câmera; janela: câmera vira janelinha na faixa Janela)
+- telas: layout do edicao.json (dividida: câmera desce; cheia: sem câmera; janela: câmera vira janelinha na faixa Janela;
+  flutua: cartões sem fundo preto; a câmera desce como na dividida, com borda suave, e a faixa Fundo embaixo leva a mesma
+  câmera ampliada e desfocada, que preenche o topo sem emenda. Ampliar a câmera até cobrir o topo jogava a legenda na boca, reel 02)
 - efeitos: a lista "sfx" do edicao.json (receita da família); sem ela, o padrão do reel 06 (grave no 0:00, whoosh na
   primeira tela, subida na virada, pop no destaque)
 - os textos NÃO vão no arquivo (o Palmier calcula a caixa de cada texto): saem prontos em 4-edicao/palmier-textos.json,
@@ -176,6 +178,7 @@ def main():
     # câmera: um clipe por trecho, partido onde uma tela começa ou termina
     cam = P.media(os.path.join(ed, 'imagem', 'camera-edicao.mp4'), 'video')
     pedacos_janela = []
+    f_fundo = None   # criada só se algum trecho cair numa tela 'flutua'; fica por último, embaixo da câmera
     grupo = {}   # trecho -> linkGroupId: câmera e voz do mesmo trecho andam juntas no Palmier
     for t in m['trechos']:
         o, n = t['out_f0'], t['n']; base = ESCALA.get(t['plano'].split()[0], 1.0); g = grupo[t['num']] = uid()
@@ -190,7 +193,13 @@ def main():
                 janela(cam['source']['external']['absolutePath'], rosto, trim, s1 - s0, arq)
                 pedacos_janela.append((s0, s1, arq))
                 continue
-            if layout:
+            if layout == 'flutua':
+                c = P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, cy=div_y, link=g); c['edgeSoftness'] = 0.2
+                if f_fundo is None:
+                    f_fundo = P.faixa('Fundo', 'video'); P.faixas.remove(f_fundo); P.faixas.insert(P.faixas.index(f_cam) + 1, f_fundo)
+                c = P.clipe(f_fundo, cam, s0, s1 - s0, trim=trim, escala=1.4)
+                c['effects'] = [dict(id=uid(), type='blur.gaussian', params=dict(radius=dict(value=40)), enabled=True)]
+            elif layout:
                 P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, cy=div_y, link=g)
             elif 'empurra' in t['plano']:
                 P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, kf=empurra_kf(base, (s0 - o) / max(n - 1, 1), (s1 - 1 - o) / max(n - 1, 1), s1 - s0), link=g)

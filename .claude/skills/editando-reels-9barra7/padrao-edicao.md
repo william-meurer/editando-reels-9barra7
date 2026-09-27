@@ -46,8 +46,22 @@ Modelo da família Bastidor: reel 06 (29.09), aprovado em 26/09. Final em `Produ
 | zoom | aproximação lenta até o detalhe, com contorno no fim | erro pequeno que precisa ser visto (puxador, luminária) |
 | apoio | vídeo de apoio em tela cheia (insert) | analogia, coisa fora do render |
 | número | número ou palavra grande em tela cheia, fundo da própria imagem escurecido | dado que fecha o argumento |
+| flutua | cartões sem fundo preto na metade de cima; a Marilia na posição da dividida e, no topo, a própria câmera ampliada e desfocada (`palmier.py`, faixa Fundo). Reel 02 | mostrar material com ela reagindo, sem o bloco preto da dividida |
 
 Dentro de uma tela, a imagem seguinte entra empurrando (8 quadros), em cortina ou em corte seco.
+
+### Repertório (aprovado em algum reel, usar quando couber)
+
+Tudo o que foi aprovado de diferente fica aqui como possibilidade, não como regra. Cada reel escolhe o que serve à fala.
+
+| Recurso | Como fica | De onde |
+|---|---|---|
+| traço que se desenha | a marcação que a Marilia fez na imagem (seta, risco) se desenha sobre a versão limpa, presa na palavra, com um clique (`desenha` no `Imagens`). Substitui gravação de tela que não veio | reel 02 |
+| planta sozinha, depois os renders | a planta entra primeiro; na palavra da imagem, empurra pros renders (um, ou dois lado a lado) | reel 02 |
+| véu no gancho | preto a 45% sobre a imagem só nos 3 s do gancho, some em 8 quadros (`veu` no `Gancho`). Pra gancho sobre imagem clara | reel 02 |
+| contorno vermelho | contorno em `#FF9F9F` no lugar do branco, quando o branco some na planta clara | reel 02 |
+| gancho digitado | letra por letra com cursor (`estilo: digitado`) | reel 01 |
+| marca-texto verde e vermelho | no texto de software: verde no que importa, vermelho no que fica de fora | reel 01 |
 
 ## Receita por família
 
@@ -63,7 +77,7 @@ Dentro de uma tela, a imagem seguinte entra empurrando (8 quadros), em cortina o
 
 ### Trilhas
 
-Banco aprovado em 27/09, em `kit/trilha/` (arquivos `cama - …`): 4 de piano (Inspiring Minimal Piano, Inspiring Piano, Piano Music, Piano inspiring), 4 de lofi (Chill Lamp Light, Chill Lofi, Lofi Chill, Lofi Chill Vlog Beats), 4 de house (as duas Deep House e as duas Minimal House) e a "Technology" do reel 06. Distribuição: dois reels seguidos nunca têm a mesma trilha nem o mesmo estilo, e no mesmo lote uma trilha não se repete. A escolha fica no `edicao.json` ("cama").
+Banco aprovado em 27/09, em `kit/trilha/` (arquivos `cama - …`): 3 de piano (Inspiring Piano, Piano Music, Piano inspiring; a Inspiring Minimal Piano foi descartada pelo William no reel 02, 27/09), 4 de lofi (Chill Lamp Light, Chill Lofi, Lofi Chill, Lofi Chill Vlog Beats), 4 de house (as duas Deep House e as duas Minimal House) e a "Technology" do reel 06. Distribuição: dois reels seguidos nunca têm a mesma trilha nem o mesmo estilo, e no mesmo lote uma trilha não se repete. A escolha fica no `edicao.json` ("cama").
 
 ## Legenda da fala
 
