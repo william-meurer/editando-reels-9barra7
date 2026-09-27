@@ -38,6 +38,7 @@ if __name__ == '__main__':
                             capture_output=True, text=True).stderr.count('black_start')
     import estalos_hf
     voz = os.path.join(ed, 'audio', 'montagem-limpa.wav')
+    if not os.path.exists(voz): voz = os.path.join(ed, 'audio', 'montagem.wav')   # voz nova: já sai limpa do D-limpo
     x, sr = sf.read(voz); estalos = len(estalos_hf.detectar(x if x.ndim == 1 else x.mean(1), sr, 6))
     ok_dur = abs(d['audio'] - d['video']) <= 1 / 30 + 0.01 and abs(d['video'] - m['quadros'] / 30) <= 1 / 30 + 0.01
     r = dict(arquivo=final, lufs_exportado=i0, ganho_db=ganho, lufs=i1, pico_db=p1, duracao=d, duracao_ok=ok_dur, quadros_pretos=pretos, estalos_na_voz=estalos)
