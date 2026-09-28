@@ -205,7 +205,8 @@ export type TrechoPrompt = {texto: string; rotulo?: string; marca?: number; cor?
 // corrido: todos os trechos num parágrafo só (prompt em texto corrido, reel 03); rola: [quadro, deslocamento px] do texto subindo;
 // fonte: tamanho em px (36 por padrão)
 export type PainelPrompt = {tipo: 'promptador'; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte'; titulo?: string; trechos: TrechoPrompt[];
-	corrido?: boolean; rola?: [number, number][]; fonte?: number};
+	corrido?: boolean; rola?: [number, number][]; fonte?: number;
+	encolhe?: [number, number, number]};   // [quadro, quadro final, escala]: o texto inteiro encolhe numa coluna ilegível que mostra o tamanho (o prompt não se revela)
 // várias imagens juntas na mesma tela (ex.: a planta em cima e a imagem gerada embaixo), cada uma na sua caixa [x, y, w, h];
 // entra: quadro em que a imagem sobe pra caixa (sem ele, já está lá quando o painel entra)
 export type ItemGrupo = PainelImg & {caixa: [number, number, number, number]; entra?: number};
@@ -218,7 +219,12 @@ const PainelPromptador: React.FC<{p: PainelPrompt; H: number}> = ({p, H}) => {
 	const k = useCurrentFrame();
 	const fonte = p.fonte ?? 36;
 	const cl = {extrapolateLeft: 'clamp' as const, extrapolateRight: 'clamp' as const};
-	const y = p.rola && p.rola.length > 1 ? interpolate(k, p.rola.map((r) => r[0]), p.rola.map((r) => r[1]), {...cl, easing: Easing.inOut(Easing.quad)}) : 0;
+	const rolar = (q: number) => p.rola && p.rola.length > 1 ? interpolate(q, p.rola.map((r) => r[0]), p.rola.map((r) => r[1]), {...cl, easing: Easing.inOut(Easing.quad)}) : 0;
+	const e = p.encolhe ? interpolate(k, [p.encolhe[0], p.encolhe[1]], [0, 1], {...cl, easing: Easing.inOut(Easing.cubic)}) : 0;
+	const escala = p.encolhe ? 1 + (p.encolhe[2] - 1) * e : 1;
+	const y = rolar(k) * (1 - e);
+	// desfoque de movimento: rolando rápido ou encolhendo, não dá pra ler
+	const borrao = Math.max(Math.min(6, Math.abs(rolar(k) - rolar(k - 1)) / 6), p.rola && p.encolhe && k < p.encolhe[1] ? 3 : 0);
 	const trecho = (t: TrechoPrompt, j: number) => {
 		const a = t.marca === undefined ? 0 : interpolate(k, [t.marca, t.marca + 10], [0, 100], {...cl, easing: Easing.out(Easing.cubic)});
 		const luz = t.acende === undefined ? 1 : interpolate(k, [t.acende, t.acende + 6], [0.22, 1], cl);
@@ -237,8 +243,9 @@ const PainelPromptador: React.FC<{p: PainelPrompt; H: number}> = ({p, H}) => {
 					<span style={{fontWeight: 500, fontSize: 22, color: '#6b6b67', border: '1.5px solid #d9d9d4', borderRadius: 999, padding: '4px 16px'}}>Copiar</span>
 				</div>
 				{p.titulo && <div style={{fontWeight: 700, fontSize: 40, flexShrink: 0}}>{p.titulo}</div>}
-				<div style={{position: 'relative', flex: 1, overflow: 'hidden', WebkitMaskImage: p.rola ? 'linear-gradient(to bottom, #000 85%, transparent)' : undefined}}>
-					<div style={{transform: `translateY(${-y}px)`, display: 'flex', flexDirection: 'column', gap: 22}}>
+				<div style={{position: 'relative', flex: 1, overflow: 'hidden', WebkitMaskImage: p.rola && e < 1 ? 'linear-gradient(to bottom, #000 85%, transparent)' : undefined}}>
+					<div style={{transform: `translateY(${-y}px) scale(${escala})`, transformOrigin: 'top center', filter: borrao > 0.3 ? `blur(${borrao}px)` : undefined,
+						display: 'flex', flexDirection: 'column', gap: 22}}>
 						{p.corrido
 							? <div style={{fontWeight: 500, fontSize: fonte, lineHeight: 1.42}}>{p.trechos.map(trecho)}</div>
 							: p.trechos.map((t, j) => <div key={j} style={{fontWeight: 500, fontSize: fonte, lineHeight: 1.42}}>{trecho(t, j)}</div>)}
