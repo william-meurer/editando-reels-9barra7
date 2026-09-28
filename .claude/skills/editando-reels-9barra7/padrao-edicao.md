@@ -25,7 +25,7 @@ Modelo da família Bastidor: reel 06 (29.09), aprovado em 26/09. Final em `Produ
 | Tela de software | gravação real da ferramenta (tela do Mac, 2880 px), em recortes aproximados que seguem a fala. Texto longo não se lê no celular: marcar os trechos importantes em verde `#B3FF9F` (marca-texto) e depois mostrá-los ampliados. O que fica de fora ou deve ser ignorado vai em vermelho `#FF9F9F` (reel 01) |
 | Prompt na tela | nunca legível inteiro (o prompt não se revela): rola rápido com desfoque e encolhe numa coluna que mostra o tamanho. Legível só o trecho curto que a fala cita (reel 03) |
 | O que a IA trocou | a imagem gerada ao lado do print original (selos PRINT e A IA), marcas só na da IA (reel 03) |
-| Planta | linha branca sobre preto (inverter a planta original), pra marcação branca aparecer |
+| Planta | como a Marilia mandou, sem inverter nem cobrir: cartão sobre o preto (margem, cantos arredondados, sombra), marcação em contorno branco (reel 01) |
 | Tipografia | DM Sans em tudo |
 | Cores | base preto e branco. Verde, vermelho e roxo só em marca-texto e selo |
 | Material da Marilia | entra como veio: nunca inverter a cor, recolorir nem cobrir parte da imagem sem pedido. Planta, print e imagem gerada entram como cartão (margem, cantos de 26 px, sombra), e o contorno é sempre branco (o padrão, também sobre planta clara). Quando a fala cita a planta e a imagem juntas, as duas aparecem juntas (painel `grupo`) |
