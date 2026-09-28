@@ -23,6 +23,8 @@ Modelo da família Bastidor: reel 06 (29.09), aprovado em 26/09. Final em `Produ
 | Número na tela | DM Sans Bold ~128 px, branca, sem sombra, letras juntas, no centro da área visível, com pop |
 | Selo | pílula DM Sans bold, caixa alta, ~36 px, texto preto, perto do que aponta. Roxo `#A4A1F3` pro errado/antes ("O TOM MUDOU"), verde `#B3FF9F` pro certo/depois |
 | Tela de software | gravação real da ferramenta (tela do Mac, 2880 px), em recortes aproximados que seguem a fala. Texto longo não se lê no celular: marcar os trechos importantes em verde `#B3FF9F` (marca-texto) e depois mostrá-los ampliados. O que fica de fora ou deve ser ignorado vai em vermelho `#FF9F9F` (reel 01) |
+| Prompt na tela | nunca legível inteiro (o prompt não se revela): rola rápido com desfoque e encolhe numa coluna que mostra o tamanho. Legível só o trecho curto que a fala cita (reel 03) |
+| O que a IA trocou | a imagem gerada ao lado do print original (selos PRINT e A IA), marcas só na da IA (reel 03) |
 | Planta | linha branca sobre preto (inverter a planta original), pra marcação branca aparecer |
 | Tipografia | DM Sans em tudo |
 | Cores | base preto e branco. Verde, vermelho e roxo só em marca-texto e selo |
