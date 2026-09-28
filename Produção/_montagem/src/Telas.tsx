@@ -211,11 +211,11 @@ export type PainelPrompt = {tipo: 'promptador'; quadro: number; entrada?: 'empur
 // entra: quadro em que a imagem sobe pra caixa (sem ele, já está lá quando o painel entra)
 export type ItemGrupo = PainelImg & {caixa: [number, number, number, number]; entra?: number};
 export type PainelGrupo = {tipo: 'grupo'; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte'; itens: ItemGrupo[]};
-// fundo: preto (padrão) ou transparente, pros cartões flutuarem sobre a câmera (reel 02, pedido do William)
+// fundo: transparente (padrão: os cartões flutuam sobre a câmera desfocada, formato flutua; o William não quer fundo preto em tela nenhuma) ou preto
 export type TelaImg = {duracao: number; area?: 'metade' | 'cheia'; fundo?: 'preto' | 'transparente'; paineis: (PainelImg | PainelPrompt | PainelGrupo)[]};
 
 // resposta do promptador (IA Studio, promptadores.9barra7.com): mesmo fundo, fonte e cor do site, ampliada pra ser lida no celular
-const PainelPromptador: React.FC<{p: PainelPrompt; H: number}> = ({p, H}) => {
+const PainelPromptador: React.FC<{p: PainelPrompt; H: number; cartao?: boolean}> = ({p, H, cartao}) => {
 	const k = useCurrentFrame();
 	const fonte = p.fonte ?? 36;
 	const cl = {extrapolateLeft: 'clamp' as const, extrapolateRight: 'clamp' as const};
@@ -236,8 +236,12 @@ const PainelPromptador: React.FC<{p: PainelPrompt; H: number}> = ({p, H}) => {
 		);
 	};
 	return (
-		<div style={{position: 'absolute', inset: 0, background: '#f6f6f4', fontFamily: 'DM Sans', color: '#111'}}>
-			<div style={{position: 'absolute', left: 56, right: 56, top: 236, bottom: H === 1920 ? 420 : 24, display: 'flex', flexDirection: 'column', gap: 22, overflow: 'hidden'}}>
+		// sobre fundo transparente, o promptador é um cartão claro flutuando (cantos arredondados e sombra), não um bloco na metade inteira
+		<div style={cartao
+			? {position: 'absolute', left: 40, right: 40, top: 222, bottom: H === 1920 ? 400 : 28, background: '#f6f6f4', fontFamily: 'DM Sans', color: '#111',
+				borderRadius: 26, boxShadow: '0 18px 48px rgba(0,0,0,.55)', outline: '1px solid rgba(255,255,255,.10)', overflow: 'hidden'}
+			: {position: 'absolute', inset: 0, background: '#f6f6f4', fontFamily: 'DM Sans', color: '#111'}}>
+			<div style={{position: 'absolute', left: cartao ? 40 : 56, right: cartao ? 40 : 56, top: cartao ? 30 : 236, bottom: cartao ? 24 : H === 1920 ? 420 : 24, display: 'flex', flexDirection: 'column', gap: 22, overflow: 'hidden'}}>
 				<div style={{display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0}}>
 					<span style={{fontWeight: 700, fontSize: 24, letterSpacing: '0.1em', color: '#8a8a86'}}>PROMPTADOR</span>
 					<span style={{fontWeight: 500, fontSize: 22, color: '#6b6b67', border: '1.5px solid #d9d9d4', borderRadius: 999, padding: '4px 16px'}}>Copiar</span>
@@ -321,25 +325,27 @@ const Grupo: React.FC<{p: PainelGrupo; fim: number}> = ({p, fim}) => {
 	})}</>;
 };
 
-export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duracao, fundo = 'preto'}) => {
+export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duracao, fundo = 'transparente'}) => {
 	const k = useCurrentFrame();
 	const W = 1080, H = area === 'cheia' ? 1920 : 960;
 	const ease = {extrapolateLeft: 'clamp' as const, extrapolateRight: 'clamp' as const, easing: Easing.inOut(Easing.cubic)};
 	const dur = (p?: PainelImg | PainelPrompt | PainelGrupo) => (!p ? 0 : p.entrada === 'cortina' ? 20 : p.entrada === 'corte' ? 0 : 8);
+	// sem fundo preto, a sombra dos cartões passa da metade de cima: o recorte desce 140 px pra ela não sair cortada em linha reta
+	const sobra = fundo !== 'preto' && H < 1920 ? 140 : 0;
 	return (
 		<AbsoluteFill>
-			<div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, overflow: 'hidden', background: fundo === 'preto' ? '#000' : 'transparent'}}>
+			<div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, clipPath: `inset(0 0 -${sobra}px 0)`, background: fundo === 'preto' ? '#000' : 'transparent'}}>
 				{paineis.map((p, i) => {
 					const prox = paineis[i + 1];
 					if (k < p.quadro || (prox && k >= prox.quadro + dur(prox))) return null;
 					const e = p.entrada ?? 'empurra';
-					const estilo: React.CSSProperties = {position: 'absolute', inset: 0, overflow: 'hidden'};
+					const estilo: React.CSSProperties = {position: 'absolute', inset: 0, clipPath: `inset(0 0 -${sobra}px 0)`};
 					if (i > 0 && e === 'empurra') estilo.transform = `translateX(${(1 - interpolate(k, [p.quadro, p.quadro + 8], [0, 1], ease)) * W}px)`;
-					if (i > 0 && e === 'cortina') estilo.clipPath = `inset(0 ${100 - interpolate(k, [p.quadro, p.quadro + 20], [0, 100], ease)}% 0 0)`;
+					if (i > 0 && e === 'cortina') estilo.clipPath = `inset(0 ${100 - interpolate(k, [p.quadro, p.quadro + 20], [0, 100], ease)}% -${sobra}px 0)`;
 					if (prox && (prox.entrada ?? 'empurra') === 'empurra' && k >= prox.quadro)
 						estilo.transform = `translateX(${-interpolate(k, [prox.quadro, prox.quadro + 8], [0, 1], ease) * W}px)`;
 					return <React.Fragment key={i}>
-						<div style={{...estilo, zIndex: i}}>{'tipo' in p ? (p.tipo === 'grupo' ? <Grupo p={p} fim={prox ? prox.quadro + dur(prox) : duracao} /> : <PainelPromptador p={p} H={H} />) : <ImagemPainel p={p} W={W} H={H} fim={prox ? prox.quadro + dur(prox) : duracao} />}</div>
+						<div style={{...estilo, zIndex: i}}>{'tipo' in p ? (p.tipo === 'grupo' ? <Grupo p={p} fim={prox ? prox.quadro + dur(prox) : duracao} /> : <PainelPromptador p={p} H={H} cartao={fundo !== 'preto'} />) : <ImagemPainel p={p} W={W} H={H} fim={prox ? prox.quadro + dur(prox) : duracao} />}</div>
 						{i > 0 && e === 'cortina' && k < p.quadro + 20 && <div style={{position: 'absolute', top: 0, bottom: 0, width: 6, marginLeft: -3, background: '#fff', zIndex: 99,
 							left: `${interpolate(k, [p.quadro, p.quadro + 20], [0, 100], ease)}%`}} />}
 					</React.Fragment>;

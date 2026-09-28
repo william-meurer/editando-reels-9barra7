@@ -41,7 +41,7 @@ Modelo da família Bastidor: reel 06 (29.09), aprovado em 26/09. Final em `Produ
 
 | Formato | Como fica | Quando |
 |---|---|---|
-| dividida | material na metade de cima (1080×960, o que importa abaixo de y 208), Marilia na metade de baixo. A câmera desce o quanto der até centerY 0,695 com o queixo acima de y 1330 (o `palmier.py` calcula pelo rosto) | explicar algo olhando pro material, com ela reagindo |
+| dividida | APOSENTADO, usar flutua (fundo preto não). Era: material na metade de cima (1080×960, o que importa abaixo de y 208), Marilia na metade de baixo. A câmera desce o quanto der até centerY 0,695 com o queixo acima de y 1330 (o `palmier.py` calcula pelo rosto) | explicar algo olhando pro material, com ela reagindo |
 | cheia | o material ocupa a tela inteira (o que importa entre y 208 e 1509), voz dela em off, legenda por cima | mostrar o resultado, abrir no resultado, imagem que precisa de tamanho |
 | janela | material em tela cheia, Marilia numa janelinha retangular de cantos arredondados (3:4, 280 px, como a câmera dupla do iPhone), flutuando no alto à direita logo abaixo de y 208, com sombra leve | gravação de tela e conversa com a IA: a tela manda, ela acompanha |
 | cortina | uma imagem varre a outra (antes → depois), dentro da cheia ou da dividida | antes/depois do mesmo ângulo |
@@ -49,6 +49,7 @@ Modelo da família Bastidor: reel 06 (29.09), aprovado em 26/09. Final em `Produ
 | apoio | vídeo de apoio em tela cheia (insert) | analogia, coisa fora do render |
 | número | número ou palavra grande em tela cheia, fundo da própria imagem escurecido | dado que fecha o argumento |
 | flutua | cartões sem fundo preto na metade de cima; a Marilia na posição da dividida e, no topo, a própria câmera ampliada e desfocada (`palmier.py`, faixa Fundo). Reel 02 | mostrar material com ela reagindo, sem o bloco preto da dividida |
+| (regra) | nenhuma tela tem fundo preto: onde antes ia a dividida, vai flutua (pedido do William, reel 03). Conferir a sombra dos cartões sobre fundo cinza: ela não pode sair cortada |
 
 Dentro de uma tela, a imagem seguinte entra empurrando (8 quadros), em cortina ou em corte seco.
 
