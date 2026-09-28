@@ -193,12 +193,19 @@ export type PainelImg = {src: string; w: number; h: number; quadro: number; entr
 	ajuste?: 'cobre' | 'contem'; foco?: [number, number]; zoom?: [number, number]; marcas?: MarcaImg[]; escurece?: Escurece[]; rotulos?: Rotulo[];
 	cartao?: boolean;      // a imagem como um cartão: margem, cantos arredondados e sombra (planta, print), em vez de encostar nas bordas
 	contorno?: string;     // cor do contorno: branco (padrão, sobre imagem escura) ou preto sobre planta clara
-	desenha?: Desenho};
+	desenha?: Desenho;
+	numeros?: Numero[]};  // texto grande na tela (tela de número), em coordenadas da tela, não da imagem
+// número grande sobre a imagem (reel 03: "3 LINHAS · 3 PÁGINAS"): DM Sans bold branco, entra como a palavra do gancho (sem som: o pop da fala vem do sfx)
+export type Numero = {quadro: number; texto: string; y: number; tamanho?: number};
 // traço da própria Marilia se desenhando sobre a versão limpa da imagem (reel 02: a seta na planta). src = PNG do mesmo
 // tamanho com transparência fora do traço; ele aparece de y "de" até y "ate" (px da imagem) em "dur" quadros, com um clique
 export type Desenho = {src: string; quadro: number; dur: number; de: number; ate: number};
-export type TrechoPrompt = {texto: string; rotulo?: string; marca?: number; cor?: string};   // marca: quadro em que o marca-texto passa (verde, ou cor: vermelho pro que fica de fora)
-export type PainelPrompt = {tipo: 'promptador'; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte'; titulo?: string; trechos: TrechoPrompt[]};
+// acende: o trecho fica apagado até esse quadro (blocos que surgem um a um, na palavra da fala)
+export type TrechoPrompt = {texto: string; rotulo?: string; marca?: number; cor?: string; acende?: number};   // marca: quadro em que o marca-texto passa (verde, ou cor: vermelho pro que fica de fora)
+// corrido: todos os trechos num parágrafo só (prompt em texto corrido, reel 03); rola: [quadro, deslocamento px] do texto subindo;
+// fonte: tamanho em px (36 por padrão)
+export type PainelPrompt = {tipo: 'promptador'; quadro: number; entrada?: 'empurra' | 'cortina' | 'corte'; titulo?: string; trechos: TrechoPrompt[];
+	corrido?: boolean; rola?: [number, number][]; fonte?: number};
 // várias imagens juntas na mesma tela (ex.: a planta em cima e a imagem gerada embaixo), cada uma na sua caixa [x, y, w, h];
 // entra: quadro em que a imagem sobe pra caixa (sem ele, já está lá quando o painel entra)
 export type ItemGrupo = PainelImg & {caixa: [number, number, number, number]; entra?: number};
@@ -209,25 +216,34 @@ export type TelaImg = {duracao: number; area?: 'metade' | 'cheia'; fundo?: 'pret
 // resposta do promptador (IA Studio, promptadores.9barra7.com): mesmo fundo, fonte e cor do site, ampliada pra ser lida no celular
 const PainelPromptador: React.FC<{p: PainelPrompt; H: number}> = ({p, H}) => {
 	const k = useCurrentFrame();
+	const fonte = p.fonte ?? 36;
+	const cl = {extrapolateLeft: 'clamp' as const, extrapolateRight: 'clamp' as const};
+	const y = p.rola && p.rola.length > 1 ? interpolate(k, p.rola.map((r) => r[0]), p.rola.map((r) => r[1]), {...cl, easing: Easing.inOut(Easing.quad)}) : 0;
+	const trecho = (t: TrechoPrompt, j: number) => {
+		const a = t.marca === undefined ? 0 : interpolate(k, [t.marca, t.marca + 10], [0, 100], {...cl, easing: Easing.out(Easing.cubic)});
+		const luz = t.acende === undefined ? 1 : interpolate(k, [t.acende, t.acende + 6], [0.22, 1], cl);
+		return (
+			<span key={j} style={{backgroundImage: `linear-gradient(${t.cor ?? '#B3FF9F'}, ${t.cor ?? '#B3FF9F'})`, backgroundRepeat: 'no-repeat', backgroundSize: `${a}% 100%`,
+				boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone', padding: '0 4px', opacity: luz}}>
+				{t.rotulo && <span style={{fontWeight: 700}}>{t.rotulo} </span>}{t.texto}
+			</span>
+		);
+	};
 	return (
 		<div style={{position: 'absolute', inset: 0, background: '#f6f6f4', fontFamily: 'DM Sans', color: '#111'}}>
-			<div style={{position: 'absolute', left: 56, right: 56, top: 236, bottom: H === 1920 ? 420 : 24, display: 'flex', flexDirection: 'column', gap: 22}}>
-				<div style={{display: 'flex', alignItems: 'center', gap: 16}}>
+			<div style={{position: 'absolute', left: 56, right: 56, top: 236, bottom: H === 1920 ? 420 : 24, display: 'flex', flexDirection: 'column', gap: 22, overflow: 'hidden'}}>
+				<div style={{display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0}}>
 					<span style={{fontWeight: 700, fontSize: 24, letterSpacing: '0.1em', color: '#8a8a86'}}>PROMPTADOR</span>
 					<span style={{fontWeight: 500, fontSize: 22, color: '#6b6b67', border: '1.5px solid #d9d9d4', borderRadius: 999, padding: '4px 16px'}}>Copiar</span>
 				</div>
-				{p.titulo && <div style={{fontWeight: 700, fontSize: 40}}>{p.titulo}</div>}
-				{p.trechos.map((t, j) => {
-					const a = t.marca === undefined ? 0 : interpolate(k, [t.marca, t.marca + 10], [0, 100], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
-					return (
-						<div key={j} style={{fontWeight: 500, fontSize: 36, lineHeight: 1.42}}>
-							<span style={{backgroundImage: `linear-gradient(${t.cor ?? '#B3FF9F'}, ${t.cor ?? '#B3FF9F'})`, backgroundRepeat: 'no-repeat', backgroundSize: `${a}% 100%`,
-								boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone', padding: '0 4px'}}>
-								{t.rotulo && <span>{t.rotulo} </span>}{t.texto}
-							</span>
-						</div>
-					);
-				})}
+				{p.titulo && <div style={{fontWeight: 700, fontSize: 40, flexShrink: 0}}>{p.titulo}</div>}
+				<div style={{position: 'relative', flex: 1, overflow: 'hidden', WebkitMaskImage: p.rola ? 'linear-gradient(to bottom, #000 85%, transparent)' : undefined}}>
+					<div style={{transform: `translateY(${-y}px)`, display: 'flex', flexDirection: 'column', gap: 22}}>
+						{p.corrido
+							? <div style={{fontWeight: 500, fontSize: fonte, lineHeight: 1.42}}>{p.trechos.map(trecho)}</div>
+							: p.trechos.map((t, j) => <div key={j} style={{fontWeight: 500, fontSize: fonte, lineHeight: 1.42}}>{trecho(t, j)}</div>)}
+					</div>
+				</div>
 			</div>
 		</div>
 	);
@@ -251,7 +267,7 @@ const ImagemPainel: React.FC<{p: PainelImg; W: number; H: number; fim: number; l
 	const [fx, fy] = p.foco ?? [p.w / 2, p.h / 2];
 	const sx = ox + fx * s0, sy = oy + fy * s0;                  // o foco fica parado na tela durante o zoom
 	const s = s0 * z; const tx = sx - fx * s, ty = sy - fy * s;
-	return (
+	return (<>
 		<div style={{position: 'absolute', left: 0, top: 0, width: p.w, height: p.h, transformOrigin: '0 0', transform: `translate(${tx}px, ${ty}px) scale(${s})`}}>
 			<Img src={staticFile(p.src)} style={{width: p.w, height: p.h, display: 'block', ...(p.cartao ? {borderRadius: 26 / s, boxShadow: `0 ${18 / s}px ${48 / s}px rgba(0,0,0,.55)`, outline: `${1 / s}px solid rgba(255,255,255,.10)`} : {})}} />
 			{p.desenha && k >= p.desenha.quadro && (() => {
@@ -279,7 +295,10 @@ const ImagemPainel: React.FC<{p: PainelImg; W: number; H: number; fim: number; l
 				<Sequence key={`r${j}`} from={r.quadro} layout="none"><Selo r={r} s={s} /></Sequence>
 			))}
 		</div>
-	);
+		{(p.numeros ?? []).map((n, j) => { const a = entra(k, n.quadro, 7);
+			return <div key={`n${j}`} style={{...FONTE_G, fontSize: n.tamanho ?? 128, color: '#fff', position: 'absolute', left: 0, right: 0, top: n.y, textAlign: 'center', whiteSpace: 'pre',
+				opacity: a, filter: `blur(${(1 - a) * 10}px)`, transform: `translateY(${(1 - a) * 22}px)`, textShadow: '0 2px 18px rgba(0,0,0,.35)'}}>{n.texto}</div>; })}
+	</>);
 };
 
 const Grupo: React.FC<{p: PainelGrupo; fim: number}> = ({p, fim}) => {
