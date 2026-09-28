@@ -10,6 +10,8 @@ loadFont({family: 'DM Sans', url: staticFile('kit/fonte/DMSans-Bold.ttf'), weigh
 loadFont({family: 'DM Sans', url: staticFile('kit/fonte/DMSans-Medium.ttf'), weight: '500'});
 
 const M = {w: 1080, h: 960}; // metade de cima
+// no flutua (fundo transparente) os cartões vão sem sombra: pedido do William, ela bugava e ele prefere limpo
+const SemSombra = React.createContext(false);
 
 // cx/cy/rx/ry em pixels da imagem original
 export type Marca = {quadro: number; img: 0 | 1; cx: number; cy: number; rx: number; ry: number};
@@ -236,10 +238,10 @@ const PainelPromptador: React.FC<{p: PainelPrompt; H: number; cartao?: boolean}>
 		);
 	};
 	return (
-		// sobre fundo transparente, o promptador é um cartão claro flutuando (cantos arredondados e sombra), não um bloco na metade inteira
+		// sobre fundo transparente, o promptador é um cartão claro flutuando (cantos arredondados, sem sombra), não um bloco na metade inteira
 		<div style={cartao
 			? {position: 'absolute', left: 40, right: 40, top: 222, bottom: H === 1920 ? 400 : 28, background: '#f6f6f4', fontFamily: 'DM Sans', color: '#111',
-				borderRadius: 26, boxShadow: '0 18px 48px rgba(0,0,0,.55)', outline: '1px solid rgba(255,255,255,.10)', overflow: 'hidden'}
+				borderRadius: 26, outline: '1px solid rgba(255,255,255,.10)', overflow: 'hidden'}
 			: {position: 'absolute', inset: 0, background: '#f6f6f4', fontFamily: 'DM Sans', color: '#111'}}>
 			<div style={{position: 'absolute', left: cartao ? 40 : 56, right: cartao ? 40 : 56, top: cartao ? 30 : 236, bottom: cartao ? 24 : H === 1920 ? 420 : 24, display: 'flex', flexDirection: 'column', gap: 22, overflow: 'hidden'}}>
 				<div style={{display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0}}>
@@ -262,6 +264,7 @@ const PainelPromptador: React.FC<{p: PainelPrompt; H: number; cartao?: boolean}>
 
 const ImagemPainel: React.FC<{p: PainelImg; W: number; H: number; fim: number; livre?: boolean}> = ({p, W, H, fim, livre}) => {
 	const k = useCurrentFrame();
+	const semSombra = React.useContext(SemSombra);
 	// área segura: nada importante acima de y 208 (e abaixo de 1509 na cheia); numa caixa de grupo, a caixa já é a área
 	const topo = livre ? 0 : 208, baseSeg = livre ? H : H === 1920 ? 1509 : H;
 	let s0: number, ox: number, oy: number;
@@ -280,7 +283,7 @@ const ImagemPainel: React.FC<{p: PainelImg; W: number; H: number; fim: number; l
 	const s = s0 * z; const tx = sx - fx * s, ty = sy - fy * s;
 	return (<>
 		<div style={{position: 'absolute', left: 0, top: 0, width: p.w, height: p.h, transformOrigin: '0 0', transform: `translate(${tx}px, ${ty}px) scale(${s})`}}>
-			<Img src={staticFile(p.src)} style={{width: p.w, height: p.h, display: 'block', ...(p.cartao ? {borderRadius: 26 / s, boxShadow: `0 ${18 / s}px ${48 / s}px rgba(0,0,0,.55)`, outline: `${1 / s}px solid rgba(255,255,255,.10)`} : {})}} />
+			<Img src={staticFile(p.src)} style={{width: p.w, height: p.h, display: 'block', ...(p.cartao ? {borderRadius: 26 / s, ...(semSombra ? {} : {boxShadow: `0 ${18 / s}px ${48 / s}px rgba(0,0,0,.55)`}), outline: `${1 / s}px solid rgba(255,255,255,.10)`} : {})}} />
 			{p.desenha && k >= p.desenha.quadro && (() => {
 				const d = p.desenha!;
 				const y = interpolate(k, [d.quadro, d.quadro + d.dur], [d.de, d.ate], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.inOut(Easing.cubic)});
@@ -314,12 +317,13 @@ const ImagemPainel: React.FC<{p: PainelImg; W: number; H: number; fim: number; l
 
 const Grupo: React.FC<{p: PainelGrupo; fim: number}> = ({p, fim}) => {
 	const k = useCurrentFrame();
+	const semSombra = React.useContext(SemSombra);
 	return <>{p.itens.map((it, j) => {
 		const [x, y, w, h] = it.caixa;
 		const a = it.entra === undefined ? 1 : interpolate(k, [it.entra, it.entra + 8], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
 		const cartaoCaixa = it.cartao && it.ajuste !== 'contem';   // imagem que cobre a caixa: o cartão é a própria caixa
 		return <div key={j} style={{position: 'absolute', left: x, top: y, width: w, height: h, overflow: 'hidden', opacity: a, transform: `translateY(${(1 - a) * 60}px)`,
-			...(cartaoCaixa ? {borderRadius: 26, boxShadow: '0 18px 48px rgba(0,0,0,.55)', outline: '1px solid rgba(255,255,255,.10)'} : {})}}>
+			...(cartaoCaixa ? {borderRadius: 26, ...(semSombra ? {} : {boxShadow: '0 18px 48px rgba(0,0,0,.55)'}), outline: '1px solid rgba(255,255,255,.10)'} : {})}}>
 			<ImagemPainel p={cartaoCaixa ? {...it, cartao: false} : it} W={w} H={h} fim={fim} livre />
 		</div>;
 	})}</>;
@@ -333,6 +337,7 @@ export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duraca
 	// sem fundo preto, a sombra dos cartões passa da metade de cima: o recorte desce 140 px pra ela não sair cortada em linha reta
 	const sobra = fundo !== 'preto' && H < 1920 ? 140 : 0;
 	return (
+		<SemSombra.Provider value={fundo !== 'preto'}>
 		<AbsoluteFill>
 			<div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, clipPath: `inset(0 0 -${sobra}px 0)`, background: fundo === 'preto' ? '#000' : 'transparent'}}>
 				{paineis.map((p, i) => {
@@ -352,6 +357,7 @@ export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duraca
 				})}
 			</div>
 		</AbsoluteFill>
+		</SemSombra.Provider>
 	);
 };
 

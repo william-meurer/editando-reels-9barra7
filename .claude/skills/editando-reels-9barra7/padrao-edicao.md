@@ -49,7 +49,7 @@ Modelo da família Bastidor: reel 06 (29.09), aprovado em 26/09. Final em `Produ
 | apoio | vídeo de apoio em tela cheia (insert) | analogia, coisa fora do render |
 | número | número ou palavra grande em tela cheia, fundo da própria imagem escurecido | dado que fecha o argumento |
 | flutua | cartões sem fundo preto na metade de cima; a Marilia na posição da dividida e, no topo, a própria câmera ampliada e desfocada (`palmier.py`, faixa Fundo). Reel 02 | mostrar material com ela reagindo, sem o bloco preto da dividida |
-| (regra) | nenhuma tela tem fundo preto: onde antes ia a dividida, vai flutua (pedido do William, reel 03). Conferir a sombra dos cartões sobre fundo cinza: ela não pode sair cortada |
+| (regra) | nenhuma tela tem fundo preto: onde antes ia a dividida, vai flutua (pedido do William, reel 03). Cartões sem sombra (pedido do William, reel 03) |
 
 Dentro de uma tela, a imagem seguinte entra empurrando (8 quadros), em cortina ou em corte seco.
 
