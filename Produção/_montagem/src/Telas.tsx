@@ -351,7 +351,11 @@ export const TelaImagens: React.FC<TelaImg> = ({paineis, area = 'metade', duraca
 						estilo.transform = `translateX(${-interpolate(k, [prox.quadro, prox.quadro + 8], [0, 1], ease) * W}px)`;
 					return <React.Fragment key={i}>
 						<div style={{...estilo, zIndex: i}}>{'tipo' in p ? (p.tipo === 'grupo' ? <Grupo p={p} fim={prox ? prox.quadro + dur(prox) : duracao} /> : <PainelPromptador p={p} H={H} cartao={fundo !== 'preto'} />) : <ImagemPainel p={p} W={W} H={H} fim={prox ? prox.quadro + dur(prox) : duracao} />}</div>
-						{i > 0 && e === 'cortina' && k < p.quadro + 20 && <div style={{position: 'absolute', top: 0, bottom: 0, width: 6, marginLeft: -3, background: '#fff', zIndex: 99,
+						{/* num grupo (cartões do flutua), a linha da cortina fica na altura dos cartões, não da metade inteira */}
+						{i > 0 && e === 'cortina' && k < p.quadro + 20 && <div style={{position: 'absolute', width: 6, marginLeft: -3, background: '#fff', zIndex: 99,
+							...('tipo' in p && p.tipo === 'grupo'
+								? {top: Math.min(...p.itens.map((it) => it.caixa[1])), height: Math.max(...p.itens.map((it) => it.caixa[1] + it.caixa[3])) - Math.min(...p.itens.map((it) => it.caixa[1]))}
+								: {top: 0, bottom: 0}),
 							left: `${interpolate(k, [p.quadro, p.quadro + 20], [0, 100], ease)}%`}} />}
 					</React.Fragment>;
 				})}
