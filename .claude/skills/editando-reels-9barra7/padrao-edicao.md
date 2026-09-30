@@ -44,7 +44,7 @@ Modelo da família Bastidor: reel 06 (29.09), aprovado em 26/09. Final em `Produ
 | dividida | APOSENTADO, usar flutua (fundo preto não). Era: material na metade de cima (1080×960, o que importa abaixo de y 208), Marilia na metade de baixo. A câmera desce o quanto der até centerY 0,695 com o queixo acima de y 1330 (o `palmier.py` calcula pelo rosto) | explicar algo olhando pro material, com ela reagindo |
 | cheia | o material ocupa a tela inteira (o que importa entre y 208 e 1509), voz dela em off, legenda por cima | mostrar o resultado, abrir no resultado, imagem que precisa de tamanho |
 | janela | material em tela cheia, Marilia numa janelinha retangular de cantos arredondados (3:4, 280 px, como a câmera dupla do iPhone), flutuando no alto à direita logo abaixo de y 208, com sombra leve | gravação de tela e conversa com a IA: a tela manda, ela acompanha |
-| cortina | uma imagem varre a outra (antes → depois), dentro da cheia ou da dividida | antes/depois do mesmo ângulo |
+| cortina | uma imagem varre a outra (antes → depois), na cheia ou dentro do cartão do flutua. No cartão, a linha branca começa e termina nas bordas dele, com os mesmos cantos, e nunca vaza (pedido do William, reel 01) | antes/depois do mesmo ângulo |
 | zoom | aproximação lenta até o detalhe, com contorno no fim | erro pequeno que precisa ser visto (puxador, luminária) |
 | apoio | vídeo de apoio em tela cheia (insert) | analogia, coisa fora do render |
 | número | número ou palavra grande em tela cheia, fundo da própria imagem escurecido | dado que fecha o argumento |
