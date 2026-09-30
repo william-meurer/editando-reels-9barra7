@@ -94,6 +94,15 @@ Bloco embaixo em todo o reel (câmera e tela). Nada nos 3 s do gancho nem enquan
 - frase longa vira dois blocos, cortados primeiro na vírgula ou no ponto e, se não couber, no tempo da fala. Bloco de 1 ou 2 palavras não fica sozinho (pisca)
 - na tela dividida, a legenda cai no peito da Marilia: se cair no rosto, sobe o enquadramento da câmera, não a legenda
 
+## Thumb
+
+Aprovada no reel 01 (30/09). Sai do `scripts/capa.py` e vai pra `5-final/capa.jpg`.
+- Foto: só a Marilia, sem material na tela. Quadro do take em que ela está bonita: sorrindo, de olhos abertos e olhando pra câmera (o CTA costuma ter os melhores). Levar pelo menos 3 opções de quadro pra aprovação com a Marilia
+- Clima: foto escurecida, faixas verticais de vidro escuro nas laterais e o rosto limpo no centro, degradê escuro embaixo
+- Logo 9barra7 Academy branco, centralizado no alto
+- Pílula com o tema (DM Sans Medium, contorno branco) e título em duas linhas brancas: a primeira pequena em DM Sans Medium, a segunda grande em Rules Compressed Black
+- Logo e título dentro do recorte 3:4 da grade do perfil (y 240 a 1680), com folga nas laterais
+
 ## Kit
 
 Tudo em `Produção/kit/`: `fonte/` (DM Sans), `logo/`, `sfx/` (os efeitos acima; descartados em `sfx/_descartados/`), `trilha/` (a cama), `fechamento/` (a marca do fim, ProRes 4444 com transparência). Origem da marca: design system em `~/Documents/claude/9barra7-ui`.

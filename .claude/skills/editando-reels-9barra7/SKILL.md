@@ -60,7 +60,8 @@ Scripts em `.claude/skills/editando-reels-9barra7/scripts/`. Todos recebem `"<pa
 10. **Exportar e conferir**: `export_project` (mp4) só depois do ok. Depois `conferir.py "<pasta>" "<mp4 exportado>"`: acerta -14 LUFS só com ganho (o Palmier exporta ~3 dB alto), confere duração, quadro preto e estalos, e grava `5-final/<reel>.mp4`
 11. **Revisor cego**: um agente que não viu nada da edição assiste ao `5-final` (quadros a cada 0,5 s + áudio) com o `padrao-edicao.md` e aponta o que quebra regra. Resultado em `4-edicao/revisor-cego.json`. Corrigir o que for erro de regra; o que for gosto vira pergunta pro William
 12. **Higienizar a pasta**: em `4-edicao/` ficam só o editável, os json, `audio/` (D-eq9, D-limpo, montagem, cama), `imagem/camera-edicao.mp4` e as telas finais com nome limpo (`telas/cena3.mov`). Versões, testes e previews vão pra `4-edicao/_arquivo/`. Renomeou arquivo que o editável usa: atualizar o `media.json` dele e conferir que nenhum link quebrou
-13. **Entrega**: caminho do mp4 e, se houver, o que o revisor levantou que pede decisão. Pacote Premiere só se a Marilia pedir (`export_project` modo xml)
+13. **Thumb**: `capa.py` (regras em "Thumb" no `padrao-edicao.md`). Levar pelo menos 3 quadros dela pra aprovação; a escolhida vai pra `5-final/capa.jpg`
+14. **Entrega**: caminho do mp4 e, se houver, o que o revisor levantou que pede decisão. Pacote Premiere só se a Marilia pedir (`export_project` modo xml)
 
 ## edicao.json
 
