@@ -7,7 +7,7 @@ Faixas, de cima pra baixo (padrao-edicao.md):
 - câmera: a imagem de edição (imagem.py) na escala de cada plano (P1 1, P2 1,10, P3 1,18, ÊNFASE 1,30; empurra até +20%);
   embaixo de uma tela, desce pra metade de baixo (tela dividida: centerY 0,695 ou menos, ver dividida_y; escala 1)
 - fechamento: último quadro congelado (vídeo parado, não PNG) na escala do último plano + a marca (kit/fechamento), 4 s
-- telas: layout do edicao.json (dividida: câmera desce; cheia: sem câmera; janela: câmera vira janelinha na faixa Janela;
+- telas: layout do edicao.json (dividida: câmera desce; cheia: sem câmera, com a câmera desfocada na faixa Fundo pro que não for imagem; janela: câmera vira janelinha na faixa Janela;
   flutua: cartões sem fundo preto; a câmera desce como na dividida, com borda suave, e a faixa Fundo embaixo leva a mesma
   câmera ampliada e desfocada, que preenche o topo sem emenda. Ampliar a câmera até cobrir o topo jogava a legenda na boca, reel 02)
 - efeitos: a lista "sfx" do edicao.json (receita da família); sem ela, o padrão do reel 06 (grave no 0:00, whoosh na
@@ -186,8 +186,13 @@ def main():
         for s0, s1 in zip(cortes, cortes[1:]):
             trim = int(round(t['src_t0'] * FPS)) + (s0 - o)
             layout = sob_tela(s0)
+            if layout in ('cheia', 'flutua'):
+                if f_fundo is None:
+                    f_fundo = P.faixa('Fundo', 'video'); P.faixas.remove(f_fundo); P.faixas.insert(P.faixas.index(f_cam) + 1, f_fundo)
+                c = P.clipe(f_fundo, cam, s0, s1 - s0, trim=trim, escala=1.4)
+                c['effects'] = [dict(id=uid(), type='blur.gaussian', params=dict(radius=dict(value=40)), enabled=True)]
             if layout == 'cheia':
-                continue                                  # tela cheia: voz em off, sem câmera
+                continue                                  # tela cheia: voz em off, sem câmera; o que não é imagem (planta em cartão) mostra o Fundo, nunca preto (reel 02)
             if layout == 'janela':
                 arq = os.path.join(ed, 'imagem', f'janela-{s0}.mov')
                 janela(cam['source']['external']['absolutePath'], rosto, trim, s1 - s0, arq)
@@ -195,10 +200,6 @@ def main():
                 continue
             if layout == 'flutua':
                 c = P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, cy=div_y, link=g); c['edgeSoftness'] = 0.2
-                if f_fundo is None:
-                    f_fundo = P.faixa('Fundo', 'video'); P.faixas.remove(f_fundo); P.faixas.insert(P.faixas.index(f_cam) + 1, f_fundo)
-                c = P.clipe(f_fundo, cam, s0, s1 - s0, trim=trim, escala=1.4)
-                c['effects'] = [dict(id=uid(), type='blur.gaussian', params=dict(radius=dict(value=40)), enabled=True)]
             elif layout:
                 P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, cy=div_y, link=g)
             elif 'empurra' in t['plano']:
