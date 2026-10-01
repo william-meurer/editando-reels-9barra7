@@ -186,7 +186,7 @@ def main():
         for s0, s1 in zip(cortes, cortes[1:]):
             trim = int(round(t['src_t0'] * FPS)) + (s0 - o)
             layout = sob_tela(s0)
-            if layout in ('cheia', 'flutua'):
+            if layout in ('cheia', 'flutua', 'janela'):
                 if f_fundo is None:
                     f_fundo = P.faixa('Fundo', 'video'); P.faixas.remove(f_fundo); P.faixas.insert(P.faixas.index(f_cam) + 1, f_fundo)
                 c = P.clipe(f_fundo, cam, s0, s1 - s0, trim=trim, escala=1.4)
