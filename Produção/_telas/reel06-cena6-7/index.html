@@ -32,11 +32,17 @@
       .trecho { position: absolute; left: 540px; opacity: 0; }
       .trecho img { display: block; mix-blend-mode: multiply; position: relative; width: auto; left: auto; top: auto; }
       .trecho .fundo { position: absolute; left: 4px; right: 0; top: 4px; bottom: 4px; background: #B3FF9F; border-radius: 3px; }
+      /* flutua (28/09): o material vira um cartão (48, 236, 984x690, cantos 26, sem sombra) sobre a câmera desfocada;
+         o desenho original de 1080x960 entra escalado na largura do cartão e centrado na altura */
+      #tela { left: 48px !important; top: 236px !important; width: 984px !important; height: 690px !important; border-radius: 26px; }
+      /* aqui a escala é 0,8 pra caber o balão inteiro (204 a 914 do desenho original); a sobra dos lados leva a cor do promptador */
+      #tela { background: #f5f5f2; }
+      #enc { position: absolute; left: 60px; top: -102px; width: 1080px; height: 960px; transform: scale(0.8); transform-origin: 0 0; }
     </style>
   </head>
   <body>
     <div id="root" data-composition-id="main" data-start="0" data-duration="16.4333" data-width="1080" data-height="1920">
-      <div id="tela" class="clip" data-start="0" data-duration="16.4333">
+      <div id="tela" class="clip" data-start="0" data-duration="16.4333"><div id="enc">
         <div id="quadro">
           <div class="etapa" id="a"><img src="assets/a_vazio.png" /></div>
           <div class="etapa" id="b"><img src="assets/b_anexo1.png" /></div>
@@ -64,7 +70,7 @@
             <div class="trecho" id="t3" style="top:710px"><div class="fundo"></div><img src="assets/t3.png" /></div>
           </div>
         </div>
-      </div>
+      </div></div>
       <audio id="clique-anexo1" src="assets/clique.wav" data-volume="0.5" data-start="3.47" data-duration="0.3"></audio>
       <audio id="clique-anexo2" src="assets/clique.wav" data-volume="0.5" data-start="6.47" data-duration="0.3"></audio>
       <audio id="clique-cruza" src="assets/clique.wav" data-volume="0.5" data-start="8.77" data-duration="0.3"></audio>
