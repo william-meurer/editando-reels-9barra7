@@ -97,7 +97,8 @@ Bloco embaixo em todo o reel (câmera e tela). Nada nos 3 s do gancho nem enquan
 ## Thumb
 
 Aprovada no reel 01 (30/09). Sai do `scripts/capa.py` e vai pra `5-final/capa.jpg`.
-- Foto: só a Marilia, sem material na tela. Quadro do take em que ela está bonita: sorrindo, de olhos abertos e olhando pra câmera (o CTA costuma ter os melhores). Levar pelo menos 3 opções de quadro pra aprovação com a Marilia
+- Foto: só a Marilia, sem material na tela. Ela tem que estar **bem bonita**: sorrindo, de olhos abertos e olhando pra câmera. Varrer o take inteiro (não só o CTA); se o take não tiver um sorriso bonito, vale quadro de outro take gravado no mesmo dia com a mesma roupa (no reel 03, o take 05 em 1:34; aí esse quadro não volta em outra thumb). Levar pelo menos 3 opções de quadro pra aprovação com a Marilia
+- Retoque: `scripts/retoque.py <quadro.png> <saída.png>` antes da `capa.py` (pele lisa por separação de frequência, textura mantida, luz leve no rosto). Nada de suavização forte: deixa a pele com cara de plástico
 - Clima: foto escurecida, faixas verticais de vidro escuro nas laterais e o rosto limpo no centro, degradê escuro embaixo
 - Logo 9barra7 Academy branco, centralizado no alto
 - Pílula com o tema (DM Sans Medium, contorno branco) e título em duas linhas brancas: a primeira pequena em DM Sans Medium, a segunda grande em Rules Compressed Black
