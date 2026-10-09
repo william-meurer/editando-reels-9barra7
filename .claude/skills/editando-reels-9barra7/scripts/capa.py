@@ -48,13 +48,25 @@ pw = fp.getlength(pil) + 56; py = 1250
 d.rounded_rectangle([(W - pw) / 2, py, (W + pw) / 2, py + 62], 31, outline=(255, 255, 255, 235), width=2)
 d.text((W / 2, py + 31), pil, font=fp, fill=(255, 255, 255, 255), anchor='mm')
 # título: linha 1 DM Sans Medium pequena, linha 2 Rules Compressed Black grande, as duas brancas
+# as duas linhas com a mesma largura, alinhadas nas duas beiradas (pedido do William, reel 04): a pequena muda de
+# corpo pra bater com a grande; se passar de 56-96, a grande é que se ajusta. O resto vai no espaçamento entre letras
+def larg(texto, fonte, track):
+    return sum(fonte.getlength(ch) + track for ch in texto) - track
 def linha(texto, fonte, y, cor, track):
-    larg = sum(fonte.getlength(ch) + track for ch in texto) - track
-    x = (W - larg) / 2
+    x = (W - larg(texto, fonte, track)) / 2
     for ch in texto:
         d.text((x, y), ch, font=fonte, fill=cor, anchor='ls'); x += fonte.getlength(ch) + track
-f1 = ImageFont.truetype(KIT + 'fonte/DMSans-Medium.ttf', 76)
-f2 = ImageFont.truetype(KIT + 'fonte/RulesCompressed-Black.otf', 200)
-linha(L1.upper(), f1, 1400, (255, 255, 255, 255), -2)
-linha(L2.upper(), f2, 1612, (255, 255, 255, 255), 0)
+F1, F2 = KIT + 'fonte/DMSans-Medium.ttf', KIT + 'fonte/RulesCompressed-Black.otf'
+t1, t2 = L1.upper(), L2.upper()
+f2 = ImageFont.truetype(F2, 200); alvo = min(larg(t2, f2, 0), 960)
+s1 = 76 * alvo / larg(t1, ImageFont.truetype(F1, 76), -2)
+if not 56 <= s1 <= 96:
+    s1 = min(max(s1, 56), 96)
+    alvo = min(larg(t1, ImageFont.truetype(F1, round(s1)), -2), 960)
+    f2 = ImageFont.truetype(F2, round(200 * alvo / larg(t2, f2, 0)))
+f1 = ImageFont.truetype(F1, round(s1))
+k1 = -2 + (alvo - larg(t1, f1, -2)) / max(len(t1) - 1, 1)
+k2 = (alvo - larg(t2, f2, 0)) / max(len(t2) - 1, 1)
+linha(t1, f1, 1400, (255, 255, 255, 255), k1)
+linha(t2, f2, 1612, (255, 255, 255, 255), k2)
 base.convert('RGB').save(saida, quality=95)

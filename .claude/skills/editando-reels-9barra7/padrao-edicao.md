@@ -102,7 +102,7 @@ Aprovada no reel 01 (30/09). Sai do `scripts/capa.py` e vai pra `5-final/capa.jp
 - Retoque: `scripts/retoque.py <quadro.png> <saída.png>` antes da `capa.py` (pele lisa por separação de frequência, textura mantida, luz leve no rosto). Nada de suavização forte: deixa a pele com cara de plástico
 - Clima: foto escurecida, faixas verticais de vidro escuro nas laterais e o rosto limpo no centro, degradê escuro embaixo
 - Logo 9barra7 Academy branco, centralizado no alto
-- Pílula com o tema (DM Sans Medium, contorno branco) e título em duas linhas brancas: a primeira pequena em DM Sans Medium, a segunda grande em Rules Compressed Black
+- Pílula com o tema (DM Sans Medium, contorno branco) e título em duas linhas brancas: a primeira pequena em DM Sans Medium, a segunda grande em Rules Compressed Black, as duas com a mesma largura, alinhadas nas duas beiradas (reel 04; o `capa.py` ajusta o corpo da pequena)
 - Logo e título dentro do recorte 3:4 da grade do perfil (y 240 a 1680), com folga nas laterais
 
 ## Kit
