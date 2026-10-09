@@ -51,3 +51,13 @@ if __name__ == '__main__':
         print('faixas:', [(x.get('name'), len(x.get('clips', []))) for x in tl['tracks']])
     if saida:
         print(tool('export_project', {'mode': 'video', 'outputPath': os.path.abspath(saida)})[:200])
+        # a exportação roda em segundo plano no Palmier (grava .<nome>-<id>.partial.mp4 e renomeia no fim): esperar o arquivo final
+        import time
+        pasta_s, base = os.path.split(os.path.abspath(saida)); stem = os.path.splitext(base)[0]
+        for _ in range(360):
+            parcial = [f for f in os.listdir(pasta_s) if f.startswith('.' + stem) and f.endswith('.partial.mp4')]
+            if os.path.exists(saida) and not parcial: break
+            time.sleep(5)
+        else:
+            raise SystemExit('exportação não terminou em 30 min')
+        print('exportado:', saida)
