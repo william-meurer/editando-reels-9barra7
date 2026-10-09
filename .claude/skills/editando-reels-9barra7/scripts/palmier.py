@@ -44,8 +44,10 @@ SFX = {
     'clique': ('sfx/mouse click (universfield, Pixabay).mp3', -14.0, 1),
 }
 # Marilia na janela (formato janela do cardápio): 280 px de largura, 3:4, cantos de 36 px, no alto à direita
-# logo abaixo da faixa da interface do Instagram (y 208): longe da legenda, dos botões e do centro da tela
+# logo abaixo da faixa da interface do Instagram (y 208): longe da legenda, dos botões e do centro da tela. Sem sombra (reel 04)
 JANELA_W, JANELA_R, JANELA_POS = 280, 36, (1080 - 36 - 280, 236)
+# tela com "janela": "centro": janelinha no centro, com quase metade sobre a borda de cima do cartão (y 600) (simulação do William, reel 04)
+JANELA_CENTRO = ((1080 - 280) // 2, 395)
 ESTILO_DESTAQUE = dict(fontName='DMSans-Bold', bold=True, fontSize=72, color='#FFFFFF', alignment='center', tracking=-5, lineSpacing=-22, shadow=dict(enabled=False))
 ESTILO_LEGENDA = dict(fontName='DMSans-Medium', bold=False, fontSize=30.37, color='#FFFFFF', alignment='center', lineSpacing=0,
                       shadow=dict(enabled=True, color='#000000', opacity=0.6, blur=2.2, offset=dict(x=0, y=1.1)))
@@ -99,21 +101,20 @@ class Projeto:
         json.dump(dict(version=2, folders=[], entries=self.midia), open(os.path.join(pasta, 'media.json'), 'w'), ensure_ascii=False)
 
 
-def janela(cam_path, rosto, trim, dur, destino):
-    """A Marilia numa janelinha retangular de cantos arredondados (como a câmera dupla do iPhone), 3:4, com sombra leve,
+def janela(cam_path, rosto, trim, dur, destino, pos=JANELA_POS):
+    """A Marilia numa janelinha retangular de cantos arredondados (como a câmera dupla do iPhone), 3:4, sem sombra,
     já na posição do quadro (ProRes 4444 com transparência). Recorte de cabeça e ombros: 2 x 2,67 larguras do rosto."""
     import numpy as np
     w = float(np.median([a['w'] for a in rosto]))
     cw, ch = int(round(2.0 * w / 2) * 2), int(round(2.0 * w * 4 / 3 / 2) * 2)
     x0, y0 = 540 - cw // 2, int(max(0, 0.22 * 1920 - 0.3 * w))   # topo da cabeça em 22% no recorte do imagem.py
-    W, H, R = JANELA_W, JANELA_W * 4 // 3, JANELA_R; X, Y = JANELA_POS
-    m = 30                                                       # margem pra sombra
+    W, H, R = JANELA_W, JANELA_W * 4 // 3, JANELA_R; X, Y = pos
+    m = 30                                                       # margem em volta da janela
     # distância até a borda do retângulo arredondado (negativa dentro), com a janela deslocada de (dx, dy) na margem
     dist = lambda dx, dy: (f"(hypot(max(max({R}-(X-{m + dx}),(X-{m + dx})-{W - 1 - R}),0),max(max({R}-(Y-{m + dy}),(Y-{m + dy})-{H - 1 - R}),0))-{R})")
     a_jan = f"255*clip(0.5-{dist(0, 0)},0,1)"
-    a_som = f"115*clip(1-{dist(0, 8)}/22,0,1)"                  # sombra leve, 8 px abaixo, some em 22 px
     fc = (f"[0:v]crop={cw}:{ch}:{x0}:{y0},scale={W}:{H},format=yuva444p,pad={W + 2 * m}:{H + 2 * m}:{m}:{m}:color=black,"
-          f"geq=lum='lum(X,Y)':cb='cb(X,Y)':cr='cr(X,Y)':a='max({a_jan},{a_som})',"
+          f"geq=lum='lum(X,Y)':cb='cb(X,Y)':cr='cr(X,Y)':a='{a_jan}',"
           f"pad=1080:1920:{X - m}:{Y - m}:color=black@0")
     subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', f'{trim / FPS:.4f}', '-t', f'{dur / FPS:.4f}', '-i', cam_path, '-vf', fc,
                     '-an', '-r', str(FPS), '-frames:v', str(int(dur)), '-c:v', 'prores_ks', '-profile:v', '4444', '-pix_fmt', 'yuva444p10le', destino], check=True)
@@ -168,8 +169,9 @@ def main():
         mt = P.media(os.path.join(ed, t['arquivo']), 'video'); dur = int(round(mt['duration'] * FPS)); link = uid()
         P.clipe(f_telas, mt, t['quadro'], dur, link=link)
         if mt['hasAudio']: P.clipe(f_cliques, mt, t['quadro'], dur, tipo='audio', link=link)
-        cobre.append((t['quadro'], t['quadro'] + dur, t.get('layout', 'dividida')))
-    sob_tela = lambda f: next((l for a_, b_, l in cobre if a_ <= f < b_), None)
+        cobre.append((t['quadro'], t['quadro'] + dur, t.get('layout', 'dividida'), JANELA_CENTRO if t.get('janela') == 'centro' else JANELA_POS))
+    sob_tela = lambda f: next((l for a_, b_, l, _ in cobre if a_ <= f < b_), None)
+    pos_janela = lambda f: next((p_ for a_, b_, _, p_ in cobre if a_ <= f < b_), JANELA_POS)
     div_y = dividida_y(ed)
     rosto = json.load(open(os.path.join(ed, 'rosto.json')))
     for f in os.listdir(os.path.join(ed, 'imagem')):
@@ -195,7 +197,7 @@ def main():
                 continue                                  # tela cheia: voz em off, sem câmera; o que não é imagem (planta em cartão) mostra o Fundo, nunca preto (reel 02)
             if layout == 'janela':
                 arq = os.path.join(ed, 'imagem', f'janela-{s0}.mov')
-                janela(cam['source']['external']['absolutePath'], rosto, trim, s1 - s0, arq)
+                janela(cam['source']['external']['absolutePath'], rosto, trim, s1 - s0, arq, pos_janela(s0))
                 pedacos_janela.append((s0, s1, arq))
                 continue
             if layout == 'flutua':
@@ -208,7 +210,7 @@ def main():
                 P.clipe(f_cam, cam, s0, s1 - s0, trim=trim, escala=base, link=g)
 
     # janela: um arquivo só por tela (o Palmier some com o quadro inteiro quando um clipe com transparência começa no meio de outro)
-    for a_, b_, l in cobre:
+    for a_, b_, l, _ in cobre:
         if l != 'janela': continue
         ps = sorted(p_ for p_ in pedacos_janela if a_ <= p_[0] < b_)
         if not ps: continue

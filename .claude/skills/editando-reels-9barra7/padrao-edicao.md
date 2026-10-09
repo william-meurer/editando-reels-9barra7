@@ -43,13 +43,14 @@ Modelo da família Bastidor: reel 06 (29.09), aprovado em 26/09. Final em `Produ
 |---|---|---|
 | dividida | APOSENTADO, usar flutua (fundo preto não). Era: material na metade de cima (1080×960, o que importa abaixo de y 208), Marilia na metade de baixo. A câmera desce o quanto der até centerY 0,695 com o queixo acima de y 1330 (o `palmier.py` calcula pelo rosto) | explicar algo olhando pro material, com ela reagindo |
 | cheia | o material ocupa a tela inteira (o que importa entre y 208 e 1509), voz dela em off, legenda por cima | mostrar o resultado, abrir no resultado, imagem que precisa de tamanho |
-| janela | material em tela cheia, Marilia numa janelinha retangular de cantos arredondados (3:4, 280 px, como a câmera dupla do iPhone), flutuando no alto à direita logo abaixo de y 208, com sombra leve | gravação de tela e conversa com a IA: a tela manda, ela acompanha |
+| janela | material em tela cheia, Marilia numa janelinha retangular de cantos arredondados (3:4, 280 px, como a câmera dupla do iPhone), flutuando no alto à direita logo abaixo de y 208, sem sombra | gravação de tela e conversa com a IA: a tela manda, ela acompanha |
+| janela central | o print em cartão (x 40 a 1040, topo em y 600) sobre a câmera desfocada, e a janelinha (3:4, 280 px, sem sombra) centralizada, com quase metade sobre a borda de cima do cartão (topo em y 395). No `edicao.json`, `"janela": "centro"` na tela. Reel 04, simulado pelo William | conversa com a IA em que o topo do print pode ficar coberto |
 | cortina | uma imagem varre a outra (antes → depois), na cheia ou dentro do cartão do flutua. No cartão, a linha branca começa e termina nas bordas dele, com os mesmos cantos, e nunca vaza (pedido do William, reel 01) | antes/depois do mesmo ângulo |
 | zoom | aproximação lenta até o detalhe, com contorno no fim | erro pequeno que precisa ser visto (puxador, luminária) |
 | apoio | vídeo de apoio em tela cheia (insert) | analogia, coisa fora do render |
 | número | número ou palavra grande em tela cheia, fundo da própria imagem escurecido | dado que fecha o argumento |
 | flutua | cartões sem fundo preto na metade de cima; a Marilia na posição da dividida e, no topo, a própria câmera ampliada e desfocada (`palmier.py`, faixa Fundo). Reel 02 | mostrar material com ela reagindo, sem o bloco preto da dividida |
-| (regra) | nenhuma tela tem fundo preto: onde antes ia a dividida, vai flutua (pedido do William, reel 03). Cartões sem sombra (pedido do William, reel 03) |
+| (regra) | nenhuma tela tem fundo preto: onde antes ia a dividida, vai flutua (pedido do William, reel 03). Cartões e janelinha sem sombra (pedidos do William, reels 03 e 04) |
 
 Dentro de uma tela, a imagem seguinte entra empurrando (8 quadros), em cortina ou em corte seco.
 
