@@ -41,15 +41,10 @@ lum = ImageOps.invert(Image.merge('RGB', (r, gg, b)).convert('L'))
 logo = Image.merge('RGBA', (lum, lum, lum, a))
 LW = 430; logo = logo.resize((LW, int(logo.height * LW / logo.width)), Image.LANCZOS)
 base.alpha_composite(logo, ((W - LW) // 2, 300))
-# pílula
-fp = ImageFont.truetype(KIT + 'fonte/DMSans-Medium.ttf', 36)
-pil = PILULA
-pw = fp.getlength(pil) + 56; py = 1250
-d.rounded_rectangle([(W - pw) / 2, py, (W + pw) / 2, py + 62], 31, outline=(255, 255, 255, 235), width=2)
-d.text((W / 2, py + 31), pil, font=fp, fill=(255, 255, 255, 255), anchor='mm')
 # título: linha 1 DM Sans Medium pequena, linha 2 Rules Compressed Black grande, as duas brancas
-# as duas linhas com a mesma largura, alinhadas nas duas beiradas (pedido do William, reel 04): a pequena muda de
-# corpo pra bater com a grande; se passar de 56-96, a grande é que se ajusta. O resto vai no espaçamento entre letras
+# as duas linhas com a mesma largura, alinhadas nas duas beiradas (pedido do William, reel 04). A grande fica em 200
+# e a pequena muda de corpo pra bater (56 a 120). Pequena curta demais: cresce até 120, abre o espaçamento até +14
+# e só então a grande encolhe; pequena longa demais: fica em 56 e a grande cresce
 def larg(texto, fonte, track):
     return sum(fonte.getlength(ch) + track for ch in texto) - track
 def linha(texto, fonte, y, cor, track):
@@ -60,13 +55,24 @@ F1, F2 = KIT + 'fonte/DMSans-Medium.ttf', KIT + 'fonte/RulesCompressed-Black.otf
 t1, t2 = L1.upper(), L2.upper()
 f2 = ImageFont.truetype(F2, 200); alvo = min(larg(t2, f2, 0), 960)
 s1 = 76 * alvo / larg(t1, ImageFont.truetype(F1, 76), -2)
-if not 56 <= s1 <= 96:
-    s1 = min(max(s1, 56), 96)
-    alvo = min(larg(t1, ImageFont.truetype(F1, round(s1)), -2), 960)
+gaps1 = max(len(t1) - 1, 1)
+if s1 > 120:
+    s1 = 120; w1 = larg(t1, ImageFont.truetype(F1, 120), -2)
+    if (alvo - w1) / gaps1 > 14:
+        alvo = w1 + 14 * gaps1
+        f2 = ImageFont.truetype(F2, round(200 * alvo / larg(t2, f2, 0)))
+elif s1 < 56:
+    s1 = 56; alvo = min(larg(t1, ImageFont.truetype(F1, 56), -2), 960)
     f2 = ImageFont.truetype(F2, round(200 * alvo / larg(t2, f2, 0)))
 f1 = ImageFont.truetype(F1, round(s1))
-k1 = -2 + (alvo - larg(t1, f1, -2)) / max(len(t1) - 1, 1)
+k1 = -2 + (alvo - larg(t1, f1, -2)) / gaps1
 k2 = (alvo - larg(t2, f2, 0)) / max(len(t2) - 1, 1)
+# pílula: acima da linha pequena, com a mesma folga qualquer que seja o corpo dela
+fp = ImageFont.truetype(KIT + 'fonte/DMSans-Medium.ttf', 36)
+pil = PILULA
+pw = fp.getlength(pil) + 56; py = round(1400 - 0.72 * s1 - 26 - 62)
+d.rounded_rectangle([(W - pw) / 2, py, (W + pw) / 2, py + 62], 31, outline=(255, 255, 255, 235), width=2)
+d.text((W / 2, py + 31), pil, font=fp, fill=(255, 255, 255, 255), anchor='mm')
 linha(t1, f1, 1400, (255, 255, 255, 255), k1)
 linha(t2, f2, 1612, (255, 255, 255, 255), k2)
 base.convert('RGB').save(saida, quality=95)
